@@ -1,27 +1,33 @@
 import streamlit as st
 import time
-from groq import Groq  # Импортираме Groq библиотеката
+from groq import Groq  # Импортираме правилната библиотека
 
+# Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
 st.title("🌡️ AI Температурен помощник")
 
-# Вземане на ключа от настройките на Streamlit Cloud (скрито)
+# Сигурно вземане на API ключа от настройките на Streamlit
 try:
     api_key = st.secrets["GROQ_API_KEY"]
 except KeyError:
     st.error("❌ Грешка: Не е намерен 'GROQ_API_KEY'!")
+    st.info("💡 Ако тествате локално, създайте `.streamlit/secrets.toml`. Ако сте в Streamlit Cloud, добавете ключа в 'Advanced Settings'.")
     st.stop()
 
 temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
 
+# Инициализиране на състоянието за запазване на резултатите
 if "ai_response" not in st.session_state:
     st.session_state.ai_response = None
 if "weather_message" not in st.session_state:
     st.session_state.weather_message = None
 
 if st.button("Провери", type="primary"):
-    st.session_state.ai_response = None  # Изчистване на стария отговор
-    
+    # Изчистване на старите резултати при ново натискане (за по-добър UX)
+    st.session_state.ai_response = None
+    st.session_state.weather_message = None
+
+    # Определяне на съобщението и анимацията
     if temperature < 10:
         st.session_state.weather_message = "🥶 Студено е!"
         animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
@@ -35,6 +41,7 @@ if st.button("Провери", type="primary"):
         st.session_state.weather_message = "🔥 Много е горещо!"
         animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
 
+    # Кратка премигваща анимация
     placeholder = st.empty()
     for i in range(6):
         frame = animation_frames[i % len(animation_frames)]
@@ -42,8 +49,8 @@ if st.button("Провери", type="primary"):
         time.sleep(0.3)
     placeholder.empty()
 
+    # Извикване на AI модела през Groq
     try:
-        # Инициализиране на Groq клиента
         client = Groq(api_key=api_key)
         
         with st.spinner("🤖 AI обмисля най-добрите съвети през Groq..."):
@@ -54,20 +61,24 @@ if st.button("Провери", type="primary"):
                 f"Отговори на български език, използвай подходящи емоджита."
             )
             
+            # Използваме новия актуален и поддържан модел qwen/qwen3.8-27b
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model="qwen/qwen3.8-27b",
             )
-            # Вземаме първия избор от списъка и четем съдържанието му безопасно
-choice = chat_completion.choices[0]
-if hasattr(choice, 'message'):
-    st.session_state.ai_response = choice.message.content
-else:
-    st.session_state.ai_response = choice['message']['content']
-
+            
+            # Безопасно извличане на текста, съвместимо с новите модели
+            first_choice = chat_completion.choices[0]
+            if hasattr(first_choice, 'message'):
+                st.session_state.ai_response = first_choice.message.content
+            else:
+                st.session_state.ai_response = first_choice['message']['content']
+                
     except Exception as e:
         st.error(f"Грешка при комуникацията с Groq: {e}")
+        st.session_state.ai_response = None
 
+# Извеждане на резултатите на екрана
 if st.session_state.weather_message:
     st.info(st.session_state.weather_message)
 
