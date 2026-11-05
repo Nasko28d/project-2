@@ -4,15 +4,14 @@ import time
 
 # Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
-
 st.title("🌡️ AI Температурен помощник")
 
-# Автоматично и сигурно вземане на API ключа от secrets.toml
+# Сигурно вземане на API ключа от настройките на Streamlit
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
 except KeyError:
-    st.error("❌ Грешка: Не е намерен 'GEMINI_API_KEY' в конфигурационните файлове!")
-    st.info("💡 Моля, създайте файл `.streamlit/secrets.toml` и добавете вашия ключ там.")
+    st.error("❌ Грешка: Не е намерен 'GEMINI_API_KEY'!")
+    st.info("💡 Ако тествате локално, създайте `.streamlit/secrets.toml`. Ако сте в Streamlit Cloud, добавете ключа в 'Advanced Settings'.")
     st.stop()
 
 temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
@@ -24,7 +23,7 @@ if "weather_message" not in st.session_state:
     st.session_state.weather_message = None
 
 if st.button("Провери", type="primary"):
-    # Ограничаване на съобщението и фреймовете за анимация
+    # Определяне на съобщението и анимацията
     if temperature < 10:
         st.session_state.weather_message = "🥶 Студено е!"
         animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
@@ -64,7 +63,7 @@ if st.button("Провери", type="primary"):
         st.error(f"Грешка при комуникацията с AI: {e}")
         st.session_state.ai_response = None
 
-# Извеждане на резултатите на екрана (за да не изчезват при рефреш)
+# Извеждане на резултатите на екрана
 if st.session_state.weather_message:
     st.info(st.session_state.weather_message)
 
