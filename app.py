@@ -56,7 +56,7 @@ if st.button("Провери", type="primary"):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-70b-versatile",
+                model="qwen/qwen3.8-27b",
             )
             st.session_state.ai_response = chat_completion.choices.message.content
     except Exception as e:
