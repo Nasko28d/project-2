@@ -58,7 +58,13 @@ if st.button("Провери", type="primary"):
                 messages=[{"role": "user", "content": prompt}],
                 model="qwen/qwen3.8-27b",
             )
-            st.session_state.ai_response = chat_completion.choices.message.content
+            # Вземаме първия избор от списъка и четем съдържанието му безопасно
+choice = chat_completion.choices[0]
+if hasattr(choice, 'message'):
+    st.session_state.ai_response = choice.message.content
+else:
+    st.session_state.ai_response = choice['message']['content']
+
     except Exception as e:
         st.error(f"Грешка при комуникацията с Groq: {e}")
 
