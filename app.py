@@ -162,54 +162,13 @@ st.markdown(
 )
 
 # Проверка на API Ключ за Groq
-try:
-    api_key = st.secrets["GROQ_API_KEY"]
-except KeyError:
-    st.error("❌ Грешка: Не е намерен 'GROQ_API_KEY'!")
-    st.stop()
-
-if "weather_message" not in st.session_state:
-    st.session_state.weather_message = None
-if "current_ai_response" not in st.session_state:
-    st.session_state.current_ai_response = None
-
-# --- БУТОН ЗА СТАРТИРАНЕ НА AI АНАЛИЗ ---
-if ai_btn:
-    st.session_state.weather_message = None
-    st.session_state.current_ai_response = None
-    
-    if temperature < 10:
-        st.session_state.weather_message = "🥶 Студено е!"
-        animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
-    elif temperature < 20:
-        st.session_state.weather_message = "🌥️ Прохладно е."
-        animation_frames = ["☁️ 🌤️ ☁️", "🌤️ ☁️ 🌤️"]
-    elif temperature < 30:
-        st.session_state.weather_message = "☀️ Приятно топло е!"
-        animation_frames = ["🌤️ ☀️ 🌤️", "☀️ 🌤️ ☀️"]
-    else:
-        st.session_state.weather_message = "🔥 Много е горещо!"
-        animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
-        
-    placeholder = st.empty()
-    for i in range(6):
-        frame = animation_frames[i % len(animation_frames)]
-        placeholder.markdown(f"<h1 style='text-align:center;'>{frame}</h1>", unsafe_allow_html=True)
-        time.sleep(0.2)
-    placeholder.empty()
-    
     try:
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             
-            system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
+            # Подготовка на съобщенията: Текущата системна инструкция винаги е най-отгоре
+            system_instruction = {"role": "system", "content": persona_prompts[persona]}
             
-            # Поддържаме правилната списъчна структура за избягване на list indices грешката
-            if not st.session_state.chat_history:
-                st.session_state.chat_history = [system_instruction]
-            else:
-                st.session_state.chat_history[0] = system_instruction
-
             prompt = (
                 f"Сега температурата е {temperature} градуса по Целзий. "
                 f"Дай кратък, практичен и забавен съвет в 3 точки съобразно твоя характер: "
@@ -217,26 +176,25 @@ if ai_btn:
                 f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
                 f"Отговори на български език, използвай много емоджита."
             )
-
+            
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
+            # Комбинираме динамичния системен промпт с историята
+            messages_to_send = [system_instruction] + st.session_state.chat_history
+            
             chat_completion = client.chat.completions.create(
-                messages=st.session_state.chat_history,
-                model="openai/gpt-oss-20b", 
+                messages=messages_to_send,
+                model="openai/gpt-oss-20b",  # Напълно работещ и стабилен модел в Groq
+                max_tokens=250,              # Предпазва от грешка 429 (Rate Limit)
+                temperature=0.7
             )
             
-            # Извличане на текста от модела (подсигурено за всякакви формати на обекта)
-            try:
-                response_text = chat_completion.choices[0].message.content
-            except (AttributeError, TypeError, KeyError):
-                try:
-                    response_text = chat_completion.choices.message.content
-                except (AttributeError, TypeError, KeyError):
-                    response_text = chat_completion["choices"][0]["message"]["content"]
-
+            # ФИКС: Добавен правилен индекс [0] за извличане на съобщението
+            response_text = chat_completion.choices[0].message.content
+            
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
             st.session_state.current_ai_response = response_text
-
+            
     except Exception as e:
         st.error(f"Грешка при комуникацията с модела: {e}")
         st.session_state.current_ai_response = None
@@ -244,6 +202,7 @@ if ai_btn:
 # Извеждане на крайния резултат най-отдолу под основния панел
 if st.session_state.weather_message:
     st.info(st.session_state.weather_message)
+
 if st.session_state.current_ai_response:
     st.subheader(f"🤖 Съвет от {persona}:")
     st.markdown(st.session_state.current_ai_response)
