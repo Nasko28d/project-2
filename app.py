@@ -213,7 +213,7 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
-                model="openai/gpt.oss.20b",
+                model="openai/gpt-oss-20b",
             )
             
             response_text = chat_completion.choices[0].message.content
