@@ -180,7 +180,7 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="llama-3.1-8b-instant",
+                model="openai/gpt-oss-20b"",
             )
             
             st.session_state.ai_response = chat_completion.choices[0].message.content
