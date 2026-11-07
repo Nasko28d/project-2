@@ -1,6 +1,5 @@
 import streamlit as st
 import time
-import requests
 from groq import Groq
 
 # Настройка на страницата
@@ -29,30 +28,12 @@ def set_preset_temperature(val):
     st.session_state.slider_input = float(val)
     st.session_state.num_input = float(val)
 
-# --- ФУНКЦИЯ ЗА ВЗЕМАНЕ НА РЕАЛНО ВРЕМЕ ---
-def get_live_weather(city_name):
-    try:
-        api_key = st.secrets["OPENWEATHER_API_KEY"]
-        # КОРИГИРАН URL: Използва правилния API endpoint
-        url = f"https://openweathermap.org{city_name},BG&appid={api_key}&units=metric&lang=bg"
-        res = requests.get(url).json()
-        if str(res.get("cod")) == "200":
-            return float(res["main"]["temp"]), res["weather"][0]["description"]
-        else:
-            return None, "Градът не е намерен"
-    except Exception:
-        # Автоматичен демо режим за симулация, ако няма въведен OpenWeather ключ
-        import random
-        demo_temps = {"София": 12.5, "Пловдив": 15.0, "Варна": 18.2, "Бургас": 17.9, "Русе": 9.0}
-        return demo_temps.get(city_name, random.uniform(5.0, 25.0)), "Разкъсана облачност (Демо режим)"
-
 st.title("🌡️ Супер AI Температурен асистент")
 
-# --- СТРАНИЧНА ЛЕНТА (SIDEBAR): Истинско време и Персони ---
+# --- СТРАНИЧНА ЛЕНТА (SIDEBAR): Персони ---
 with st.sidebar:
     st.header("⚙️ Опции и Екстри")
     
-    # ИДЕЯ 1: Персона на AI
     st.subheader("👤 Избери характер на AI:")
     persona = st.selectbox(
         "Кой искаш да ти даде съвет?",
@@ -65,22 +46,6 @@ with st.sidebar:
         "Саркастичният Комедиант 🎭": "Ти си изключително саркастичен и забавен стендъп комедиант. Подиграваш се на избора на температура, даваш абсурдни и смешни съвети за оцеляване и използваш черен хумор и ирония.",
         "Професионалният Метеоролог 📊": "Ти си сериозен, научен метеоролог и климатолог. Даваш точни, научно обосновани съвети за обличане, атмосферно налягане, хидратация и UV индекс с висок професионализъм."
     }
-    
-    st.write("---")
-    
-    # ИДЕЯ 2: Интеграция с реално време
-    st.subheader("🌍 Вземи времето на живо:")
-    city = st.text_input("Въведи град в България:", placeholder="напр. София, Варна...")
-    if st.button("Вземи температурата"):
-        if city:
-            live_temp, desc = get_live_weather(city)
-            if live_temp is not None:
-                set_preset_temperature(live_temp)
-                st.success(f"Успешно взето: {live_temp}°C, {desc}")
-            else:
-                st.error(f"Грешка: {desc}")
-        else:
-            st.warning("Моля, въведете име на град.")
 
 # --- ОСНОВЕН ПАНЕЛ: Разделяне на Термометър и Контроли ---
 main_col, thermo_col = st.columns([3, 1])
@@ -107,7 +72,7 @@ with main_col:
     temperature = st.session_state.temp_val
     st.markdown(f"### Текущо избрана температура: **{temperature:.1f} °C**")
 
-# ИДЕЯ 3: Визуален интерактивен термометър
+# Визуален интерактивен термометър
 with thermo_col:
     st.subheader("Термометър")
     clamped_temp = max(-30.0, min(50.0, temperature))
@@ -134,7 +99,7 @@ with thermo_col:
         """, unsafe_allow_html=True
     )
 
-# --- ДИНАМИЧЕН ЦВЯТ НА ЦЯЛОТО ПРИЛОЖЕНИЕ ---
+# --- ДИНАМИЧЕН ЦВЯТ НА ЦЯЛОТО ПРИЛОЖЕНИЕ С КОРИГИРАН CSS ---
 if temperature < 5:
     bg_color = "#007791"
 elif temperature < 23:
@@ -166,11 +131,6 @@ st.markdown(
     /* Текстът ВЪТРЕ в полетата за въвеждане и селектора */
     .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{ 
         color: #FFFFFF !important; 
-    }}
-    
-    /* Цвят на подсказващия текст (placeholder) в полето за град */
-    input::placeholder {{
-        color: rgba(255, 255, 255, 0.6) !important;
     }}
     
     /* Стилизиране на бутоните за по-добра видимост */
@@ -228,13 +188,11 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             
-            # Настройка на системния промпт
             system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
-            
             if not st.session_state.chat_history:
                 st.session_state.chat_history.append(system_instruction)
             else:
-                st.session_state.chat_history[0] = system_instruction
+                st.session_state.chat_history = system_instruction
 
             prompt = (
                 f"Сега температурата е {temperature} градуса по Целзий. "
@@ -252,12 +210,9 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             )
             
             try:
-                response_text = chat_completion.choices[0].message.content
+                response_text = chat_completion.choices.message.content
             except (AttributeError, TypeError):
-                try:
-                    response_text = chat_completion.choices["message"]["content"]
-                except Exception:
-                    response_text = chat_completion.choices[0]["message"]["content"]
+                response_text = chat_completion.choices["message"]["content"]
 
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
             st.session_state.current_ai_response = response_text
@@ -266,7 +221,7 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
         st.error(f"Грешка при комуникацията с модела: {e}")
         st.session_state.current_ai_response = None
 
-# Извеждане на крайния резултат (извън блока на бутона за стабилност)
+# Извеждане на крайния резултат
 if st.session_state.weather_message:
     st.info(st.session_state.weather_message)
 if st.session_state.current_ai_response:
