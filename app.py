@@ -228,5 +228,5 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
 if st.session_state.weather_message:
     st.info(st.session_state.weather_message)
 if st.session_state.current_ai_response:
-st.subheader(f"🤖 Съвет от {persona}:")
-st.markdown(st.session_state.current_ai_response)
+    st.subheader(f"🤖 Съвет от {persona}:")
+    st.markdown(st.session_state.current_ai_response)
