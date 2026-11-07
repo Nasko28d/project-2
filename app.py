@@ -194,23 +194,16 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
         time.sleep(0.2)
     placeholder.empty()
     
-      try:
-        # Ако използваш OpenAI-съвместимо прокси за този модел, 
-        # е най-добре да използваш библиотеката openai вместо groq:
-        # от openai import OpenAI
-        # client = OpenAI(api_key=api_key, base_url="ТВОЯ_BASE_URL_АКО_ИМА_ТАЪВ")
-        
-        client = Groq(api_key=api_key) # Запазваме го, в случай че проксито ти работи през Groq об обвивка
-        
+    try:
+        client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             
-            # Подсигуряваме правилното форматиране на системния промпт
+            # Настройка на системния промпт
             system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
             
             if not st.session_state.chat_history:
                 st.session_state.chat_history.append(system_instruction)
             else:
-                # Обновяваме само първия елемент (системния промпт), ако персонажа е сменен
                 st.session_state.chat_history[0] = system_instruction
 
             prompt = (
@@ -223,18 +216,18 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
-            # Извикване на твоя специфичен модел
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
                 model="openai/gpt-oss-20b",
             )
             
-            # Внимавай тук: в някои библиотеки синтаксисът е choices[0].message.content, а в други choices[0]['message']['content']
-            # Тъй като gpt-oss-20b често идва през специфични API-та, ето най-сигурния начин за извличане:
             try:
                 response_text = chat_completion.choices[0].message.content
             except (AttributeError, TypeError):
-                response_text = chat_completion.choices[0]["message"]["content"]
+                try:
+                    response_text = chat_completion.choices["message"]["content"]
+                except Exception:
+                    response_text = chat_completion.choices[0]["message"]["content"]
 
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
             st.session_state.current_ai_response = response_text
@@ -242,3 +235,10 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
     except Exception as e:
         st.error(f"Грешка при комуникацията с модела: {e}")
         st.session_state.current_ai_response = None
+
+# Извеждане на крайния резултат (извън блока на бутона за стабилност)
+if st.session_state.weather_message:
+    st.info(st.session_state.weather_message)
+if st.session_state.current_ai_response:
+    st.subheader(f"🤖 Съвет от {persona}:")
+    st.markdown(st.session_state.current_ai_response)
