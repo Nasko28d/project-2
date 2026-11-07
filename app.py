@@ -198,14 +198,19 @@ if ai_btn:
         time.sleep(0.2)
     placeholder.empty()
     
-    try:
+        try:
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
+            
+            # Дефинираме системната инструкция
             system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
+            
+            # КОРИГИРАНО: Поддържаме chat_history винаги като списък (list)
             if not st.session_state.chat_history:
-                st.session_state.chat_history.append(system_instruction)
+                st.session_state.chat_history = [system_instruction]
             else:
-                st.session_state.chat_history = system_instruction
+                # Ако вече има история, просто обновяваме първия елемент (системния промпт), без да чупим списъка
+                st.session_state.chat_history[0] = system_instruction
 
             prompt = (
                 f"Сега температурата е {temperature} градуса по Целзий. "
@@ -221,10 +226,14 @@ if ai_btn:
                 model="openai/gpt-oss-20b",
             )
             
+            # Извличане на текста от модела (подсигурено за всякакви формати на обекта)
             try:
-                response_text = chat_completion.choices.message.content
-            except (AttributeError, TypeError):
-                response_text = chat_completion.choices["message"]["content"]
+                response_text = chat_completion.choices[0].message.content
+            except (AttributeError, TypeError, KeyError):
+                try:
+                    response_text = chat_completion.choices.message.content
+                except (AttributeError, TypeError, KeyError):
+                    response_text = chat_completion["choices"][0]["message"]["content"]
 
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
             st.session_state.current_ai_response = response_text
@@ -239,3 +248,4 @@ if st.session_state.weather_message:
 if st.session_state.current_ai_response:
     st.subheader(f"🤖 Съвет от {persona}:")
     st.markdown(st.session_state.current_ai_response)
+
