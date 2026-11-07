@@ -31,7 +31,7 @@ with col_b3:
         st.session_state.temp_val = 35.0
 
 # Начин 2 & 3: Плъзгач и Точно поле (разположени едно до друго)
-col1, col2 = st.columns()
+col1, col2 = st.columns(2)
 
 with col1:
     temperature_slider = st.slider(
