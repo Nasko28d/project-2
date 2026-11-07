@@ -5,10 +5,66 @@ from groq import Groq
 # Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
 
-# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА И КОНТРАСТЕН ТЕКСТ ---
-temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
+# Инициализиране на температурата по подразбиране в състоянието на сесията
+if "temp_val" not in st.session_state:
+    st.session_state.temp_val = 20.0
 
-# Дефиниране на стилове за всяка зона (меки фонове + много тъмни цветове за текста)
+# Функция за обновяване на температурата при използване на контроли
+def update_temp(key):
+    st.session_state.temp_val = float(st.session_state[key])
+
+st.title("🌡️ AI Температурен помощник")
+
+# --- СЕКЦИЯ: НАЧИНИ ЗА ВЪВЕЖДАНЕ ---
+st.subheader("Изберете температура по вашия любим начин:")
+
+# Начин 1: Бързи бутони (Preset Buttons)
+col_b1, col_b2, col_b3 = st.columns(3)
+with col_b1:
+    if st.button("❄️ Зимна (-5°C)", use_container_width=True):
+        st.session_state.temp_val = -5.0
+with col_b2:
+    if st.button("🏠 Стайна (22°C)", use_container_width=True):
+        st.session_state.temp_val = 22.0
+with col_b3:
+    if st.button("🔥 Лятна жега (35°C)", use_container_width=True):
+        st.session_state.temp_val = 35.0
+
+# Начин 2 & 3: Плъзгач и Точно поле (разположени едно до друго)
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    temperature_slider = st.slider(
+        "Използвай плъзгача:", 
+        min_value=-50.0, 
+        max_value=60.0, 
+        value=float(st.session_state.temp_val),
+        step=0.5,
+        key="slider_input",
+        on_change=update_temp,
+        args=("slider_input",)
+    )
+
+with col2:
+    temperature_num = st.number_input(
+        "Или въведи точно:", 
+        min_value=-50.0, 
+        max_value=60.0, 
+        value=float(st.session_state.temp_val),
+        step=0.1,
+        key="num_input",
+        on_change=update_temp,
+        args=("num_input",)
+    )
+
+# Финалната стойност, която ще се използва за изчисленията
+temperature = st.session_state.temp_val
+
+# Показваме текущо избраната температура с по-голям текст
+st.markdown(f"### Текущо избрана температура: **{temperature:.1f} °C**")
+
+
+# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА И КОНТРАСТЕН ТЕКСТ ---
 if temperature < 10:
     bg_color = "#E0F7FA"     # Свежо светлосиньо
     text_color = "#004D40"   # Тъмно патешко зелено/синьо
@@ -52,7 +108,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.title("🌡️ AI Температурен помощник")
 
 # Сигурно вземане на API ключа от настройките на Streamlit
 try:
@@ -62,13 +117,13 @@ except KeyError:
     st.info("💡 Ако тествате локално, създайте `.streamlit/secrets.toml`. Ако сте в Streamlit Cloud, добавете ключа в 'Advanced Settings'.")
     st.stop()
 
-# Инициализиране на състоянието за запазване на резултатите
+# Инициализиране на състоянието за запазване на резултатите от AI
 if "ai_response" not in st.session_state:
     st.session_state.ai_response = None
 if "weather_message" not in st.session_state:
     st.session_state.weather_message = None
 
-if st.button("Провери", type="primary"):
+if st.button("Провери с AI", type="primary", use_container_width=True):
     # Изчистване на старите резултати при ново натискане
     st.session_state.ai_response = None
     st.session_state.weather_message = None
@@ -109,10 +164,10 @@ if st.button("Провери", type="primary"):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="openai/gpt-oss-120b",  # Бърз и стабилен работещ модел
+                model="openai/gpt-oss-120b",
             )
             
-            st.session_state.ai_response = chat_completion.choices[0].message.content
+            st.session_state.ai_response = chat_completion.choices.message.content
                 
     except Exception as e:
         st.error(f"Грешка при комуникацията с Groq: {e}")
