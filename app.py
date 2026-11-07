@@ -31,7 +31,7 @@ with col_b3:
         st.session_state.temp_val = 35.0
 
 # Начин 2 & 3: Плъзгач и Точно поле (разположени едно до друго)
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns()
 
 with col1:
     temperature_slider = st.slider(
@@ -64,44 +64,49 @@ temperature = st.session_state.temp_val
 st.markdown(f"### Текущо избрана температура: **{temperature:.1f} °C**")
 
 
-# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА И КОНТРАСТЕН ТЕКСТ ---
+# --- НА СИТЕНИ И ЯРКИ ЦВЕТОВЕ С БЯЛ ТЕКСТ ЗА КОНТРАСТ ---
 if temperature < 10:
-    bg_color = "#E0F7FA"     # Свежо светлосиньо
-    text_color = "#004D40"   # Тъмно патешко зелено/синьо
+    bg_color = "#007791"     # Дълбоко, наситено океанско синьо
 elif temperature < 20:
-    bg_color = "#F1F8E9"     # Бледо пастелно зелено
-    text_color = "#1B5E20"   # Тъмно горско зелено
+    bg_color = "#2E7D32"     # Наситено, сочно горско зелено
 elif temperature < 30:
-    bg_color = "#FFFDF0"     # Мек, изключително блед крем/жълт фон (много по-светъл за четливост)
-    text_color = "#3E2723"   # Тъмно кафяво (перфектен контраст върху жълтеникав фон)
+    bg_color = "#FF8F00"     # Силно, жизнено слънчево оранжево
 else:
-    bg_color = "#FFEBEE"     # Бледо червено
-    text_color = "#B71C1C"   # Тъмно бордо
+    bg_color = "#C62828"     # Наситено, огнено ярко червено
 
-# Инжектиране на CSS за гарантиран контраст на всички текстови елементи в Streamlit
+text_color = "#FFFFFF"       # Чисто бял цвят за перфектна четимост върху ярките фонове
+
+# Инжектиране на изчерпателен CSS за пълна промяна на темата на Streamlit
 st.markdown(
     f"""
     <style>
-    /* Фон на приложението */
+    /* Основен фон на приложението */
     .stApp {{
         background-color: {bg_color} !important;
         transition: background-color 0.5s ease;
     }}
     
-    /* Цвят на заглавията */
-    h1, h2, h3, h4, h5, h6 {{
+    /* Промяна на абсолютно всички текстове, заглавия и параграфи в бяло */
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{
         color: {text_color} !important;
     }}
     
-    /* Цвят на обикновения текст и параграфите */
-    p, span, label, .stMarkdown {{
-        color: {text_color} !important;
-    }}
-    
-    /* Специфична корекция за текста вътре в AI отговора */
+    /* Гаранция за четливост на AI отговора */
     .stMarkdown p {{
         color: {text_color} !important;
         font-weight: 500;
+        font-size: 1.1rem;
+    }}
+
+    /* Специфична корекция за бутоните, за да се виждат по-добре */
+    .stButton>button {{
+        border: 2px solid white !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }}
+    .stButton>button:hover {{
+        background-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
     }}
     </style>
     """,
