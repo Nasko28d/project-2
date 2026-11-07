@@ -50,15 +50,31 @@ with st.sidebar:
     }
 
 # --- ДИНАМИЧЕН ЦВЯТ НА ПРИЛОЖЕНИЕТО ---
+# --- ДИНАМИЧЕН ЦВЯТ НА ПРИЛОЖЕНИЕТО (ПЛАВЕН СПЕКТЪР) ---
 temperature = st.session_state.temp_val
-if temperature < 5:
-    bg_color = "#007791"
-elif temperature < 23:
-    bg_color = "#2E7D32"
-elif temperature < 33:
-    bg_color = "#FF8F00"
-else:
-    bg_color = "#C62828"
+
+# Нормализираме температурата между -20°C (студено синьо) и 40°C (горещо червено)
+min_t, max_t = -20.0, 40.0
+clamped_t = max(min_t, min(max_t, temperature))
+ratio = (clamped_t - min_t) / (max_t - min_t)
+
+# Изчисляваме RGB стойностите динамично
+# От студено синьо (0, 119, 145) през зелено/оранжево до наситено червено (198, 40, 40)
+if ratio < 0.33:  # От много студено до хладно
+    r = int(0 + (46 * (ratio / 0.33)))
+    g = int(119 + (6 * (ratio / 0.33)))
+    b = int(145 - (95 * (ratio / 0.33)))
+elif ratio < 0.66:  # От стайна температура до жега
+    r = int(46 + (209 * ((ratio - 0.33) / 0.33)))
+    g = int(125 + (18 * ((ratio - 0.33) / 0.33)))
+    b = int(50 - (50 * ((ratio - 0.33) / 0.33)))
+else:  # Адска жега
+    r = int(255 - (57 * ((ratio - 0.66) / 0.34)))
+    g = int(143 - (103 * ((ratio - 0.66) / 0.34)))
+    b = int(0 + (40 * ((ratio - 0.66) / 0.34)))
+
+bg_color = f"rgb({r}, {g}, {b})"
+
 
 # --- ОСНОВЕН ПАНЕЛ: Балансирано разделение на колоните (2:1 мащаб) ---
 main_col, info_col = st.columns([2, 1], gap="large")
