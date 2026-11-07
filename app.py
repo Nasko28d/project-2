@@ -40,7 +40,6 @@ with st.sidebar:
         ["Грижовната Баба 👵", "Саркастичният Комедиант 🎭", "Професионалният Метеоролог 📊"]
     )
     
-    # Дефиниране на системния промпт спрямо избраната персона
     persona_prompts = {
         "Грижовната Баба 👵": "Ти си любяща, но изключително притеснена българска баба. Караш се на потребителя, ако не носи шапка, настояваш да си обуе вълнени чорапи, предлагаш му топла супа или чай и говориш мило, използвайки думи като 'чедо', 'бабиното' и 'настинка'.",
         "Саркастичният Комедиант 🎭": "Ти си изключително саркастичен и забавен стендъп комедиант. Подиграваш се на избора на температура, даваш абсурдни и смешни съвети за оцеляване и използваш черен хумор и ирония.",
@@ -48,7 +47,7 @@ with st.sidebar:
     }
 
 # --- ОСНОВЕН ПАНЕЛ: Разделяне на Термометър и Контроли ---
-main_col, thermo_col = st.columns([3, 1])
+main_col, thermo_col = st.columns([3, 1.2])
 
 with main_col:
     st.subheader("Изберете температура ръчно:")
@@ -72,7 +71,7 @@ with main_col:
     temperature = st.session_state.temp_val
     st.markdown(f"### Текущо избрана температура: **{temperature:.1f} °C**")
 
-# Визуален интерактивен термометър
+# Десен панел: Термометър и новите функции
 with thermo_col:
     st.subheader("Термометър")
     clamped_temp = max(-30.0, min(50.0, temperature))
@@ -98,6 +97,40 @@ with thermo_col:
         </div>
         """, unsafe_allow_html=True
     )
+    
+    st.write("---")
+    
+    # 🆕 ЕКСТРА 3: Скала за оцеляване (Индекс на комфорт)
+    st.subheader("🚨 Статус за оцеляване:")
+    if temperature <= -15:
+        status_text = "🧊 Ледена епоха. Сибирски студ! Не излизай, освен ако къщата не гори."
+    elif temperature < 5:
+        status_text = "🥶 Кочан студ. Всичко замръзва. Време е за дебело яке и топъл чай."
+    elif temperature < 15:
+        status_text = "🧥 Хладинка. Свежо време, но без яке ще настинеш бързо."
+    elif temperature < 25:
+        status_text = "🏝️ Райско кътче. Перфектно стайно време. Нито ти е студено, нито топло."
+    elif temperature < 33:
+        status_text = "☀️ Жегичка. Става за плаж, но потенето вече започна."
+    else:
+        status_text = "🌋 Адска жега! Асфалтът се топи, а ти се превръщаш в пържола."
+    
+    st.info(status_text)
+    
+    # 🆕 ЕКСТРА 1: Визуален гардероб ("Какво да облека?")
+    st.subheader("🎒 Препоръчителен гардероб:")
+    if temperature < 0:
+        clothes = "🧥 Дебело зимно яке\n\n🧣 Топъл шал\n\n🧤 Ръкавици\n\n🧦 Вълнени чорапи"
+    elif temperature < 12:
+        clothes = "🧥 Преходно яке / Палто\n\n👖 Дълги панталони\n\n👟 Маратонки\n\n🧣 Лек шал"
+    elif temperature < 23:
+        clothes = "👕 Суичър или жилетка\n\n👕 Тениска под него\n\n👖 Дънкови панталони\n\n👟 Удобни обувки"
+    elif temperature < 30:
+        clothes = "👕 Тънка тениска / Риза\n\n🩳 Къси панталони или пола\n\n👟 Сандали или гуменки"
+    else:
+        clothes = "🩲 Минимално облекло / Бански\n\n🩴 Джапанки\n\n🕶️ Слънчеви очила\n\n🧢 Шапка с козирка"
+        
+    st.success(clothes)
 
 # --- ДИНАМИЧЕН ЦВЯТ НА ЦЯЛОТО ПРИЛОЖЕНИЕ С КОРИГИРАН CSS ---
 if temperature < 5:
@@ -112,28 +145,19 @@ else:
 st.markdown(
     f"""
     <style>
-    /* Основен фон на приложението */
     .stApp {{ 
         background-color: {bg_color} !important; 
         transition: background-color 0.5s ease; 
     }}
-    
-    /* Всички основни текстове стават бели */
     h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{ 
         color: #FFFFFF !important; 
     }}
-    
-    /* Текстът НАД плъзгача/слайдера */
     div[data-testid="stWidgetLabel"] p, div[data-testid="stSliderHandle"] > div {{
         color: #FFFFFF !important;
     }}
-    
-    /* Текстът ВЪТРЕ в полетата за въвеждане и селектора */
     .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{ 
         color: #FFFFFF !important; 
     }}
-    
-    /* Стилизиране на бутоните за по-добра видимост */
     .stButton>button {{ 
         border: 2px solid white !important; 
         background-color: rgba(255, 255, 255, 0.1) !important; 
@@ -142,6 +166,10 @@ st.markdown(
     .stButton>button:hover {{ 
         background-color: rgba(255, 255, 255, 0.3) !important; 
         color: white !important; 
+    }}
+    /* Оправяне на текста вътре в инфо кутиите, за да се чете лесно */
+    div[data-testid="stNotification"] p {{
+        color: #31333F !important;
     }}
     </style>
     """, unsafe_allow_html=True
