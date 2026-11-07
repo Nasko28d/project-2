@@ -169,10 +169,11 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="openai/gpt-oss-120b",
+                model="openai/gpt-oss-120b",  # Стабилен и бърз актуален модел
             )
             
-            st.session_state.ai_response = chat_completion.choices.message.content
+            # Поправка на синтаксиса: добавен е индексът [0] за достъп до обекта в списъка
+            st.session_state.ai_response = chat_completion.choices[0].message.content
                 
     except Exception as e:
         st.error(f"Грешка при комуникацията с Groq: {e}")
