@@ -14,6 +14,10 @@ if "num_input" not in st.session_state:
     st.session_state.num_input = 22.0
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "weather_message" not in st.session_state:
+    st.session_state.weather_message = None
+if "current_ai_response" not in st.session_state:
+    st.session_state.current_ai_response = None
 
 def sync_inputs(source_key):
     val = float(st.session_state[source_key])
@@ -70,7 +74,7 @@ with main_col:
         st.button("🏠 Стайна (22°C)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
     with col_b3:
         st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
-        
+    
     # Слайдер и Нумерично поле
     c1, c2 = st.columns(2)
     with c1:
@@ -79,7 +83,6 @@ with main_col:
         st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
         
     st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{temperature:.1f} °C</b></h2>", unsafe_allow_html=True)
-    
     st.write("")
     ai_btn = st.button("Провери с AI", type="primary", use_container_width=True)
 
@@ -124,9 +127,9 @@ with info_col:
         status_text = "🌋 Адска жега! Асфалтът се топи около теб."
         
     st.markdown(f"""
-        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #FFEB3B; margin-bottom: 20px; color: white;">
-            <b style="font-size: 16px;">🚨 Статус за оцеляване:</b><br>{status_text}
-        </div>
+    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #FFEB3B; margin-bottom: 20px; color: white;">
+        <b style="font-size: 16px;">🚨 Статус за оцеляване:</b><br>{status_text}
+    </div>
     """, unsafe_allow_html=True)
     
     # Визуален гардероб
@@ -142,26 +145,73 @@ with info_col:
         clothes = "🩲 Бански костюм, 🩴 Джапанки, 🕶️ Очила, 🧢 Шапка"
         
     st.markdown(f"""
-        <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #4CAF50; color: white;">
-            <b style="font-size: 16px;">🎒 Препоръчителен гардероб:</b><br>{clothes}
-        </div>
+    <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #4CAF50; color: white;">
+        <b style="font-size: 16px;">🎒 Препоръчителен гардероб:</b><br>{clothes}
+    </div>
     """, unsafe_allow_html=True)
 
 # --- ГЛОБАЛЕН И КОРИГИРАН CSS СТИЛ ---
 st.markdown(
     f"""
     <style>
-    .stApp {{ background-color: {bg_color} !important; transition: background-color 0.5s ease; }}
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{ color: #FFFFFF !important; }}
-    div[data-testid="stWidgetLabel"] p, div[data-testid="stSliderHandle"] > div {{ color: #FFFFFF !important; }}
-    .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{ color: #FFFFFF !important; }}
-    .stButton>button {{ border: 2px solid white !important; background-color: rgba(255, 255, 255, 0.1) !important; color: white !important; }}
-    .stButton>button:hover {{ background-color: rgba(255, 255, 255, 0.3) !important; color: white !important; }}
+    .stApp {{
+        background-color: {bg_color} !important;
+        transition: background-color 0.5s ease;
+    }}
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{
+        color: #FFFFFF !important;
+    }}
+    div[data-testid="stWidgetLabel"] p, div[data-testid="stSliderHandle"] > div {{
+        color: #FFFFFF !important;
+    }}
+    .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{
+        color: #FFFFFF !important;
+    }}
+    .stButton>button {{
+        border: 2px solid white !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }}
+    .stButton>button:hover {{
+        background-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }}
     </style>
     """, unsafe_allow_html=True
 )
 
 # Проверка на API Ключ за Groq
+try:
+    api_key = st.secrets["GROQ_API_KEY"]
+except KeyError:
+    st.error("❌ Грешка: Не е намерен 'GROQ_API_KEY' в st.secrets!")
+    st.stop()
+
+# --- БУТОН ЗА СТАРТИРАНЕ НА AI АНАЛИЗ ---
+if ai_btn:
+    st.session_state.weather_message = None
+    st.session_state.current_ai_response = None
+    
+    if temperature < 10:
+        st.session_state.weather_message = "🥶 Студено е!"
+        animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
+    elif temperature < 20:
+        st.session_state.weather_message = "🌥️ Прохладно е."
+        animation_frames = ["☁️ 🌤️ ☁️", "🌤️ ☁️ 🌤️"]
+    elif temperature < 30:
+        st.session_state.weather_message = "☀️ Приятно топло е!"
+        animation_frames = ["🌤️ ☀️ 🌤️", "☀️ 🌤️ ☀️"]
+    else:
+        st.session_state.weather_message = "🔥 Много е горещо!"
+        animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
+        
+    placeholder = st.empty()
+    for i in range(6):
+        frame = animation_frames[i % len(animation_frames)]
+        placeholder.markdown(f"<h1 style='text-align:center;'>{frame}</h1>", unsafe_allow_html=True)
+        time.sleep(0.2)
+    placeholder.empty()
+    
     try:
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
@@ -179,17 +229,22 @@ st.markdown(
             
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
+            # Ограничаваме паметта до последните 6 съобщения, за да не превишаваме OTPM лимита (Error 429)
+                        # Ограничаваме паметта до последните 6 съобщения, за да не превишаваме OTPM лимита (Error 429)
+            if len(st.session_state.chat_history) > 6:
+                st.session_state.chat_history = st.session_state.chat_history[-6:]
+            
             # Комбинираме динамичния системен промпт с историята
             messages_to_send = [system_instruction] + st.session_state.chat_history
             
             chat_completion = client.chat.completions.create(
                 messages=messages_to_send,
-                model="openai/gpt-oss-20b",  # Напълно работещ и стабилен модел в Groq
-                max_tokens=250,              # Предпазва от грешка 429 (Rate Limit)
+                model="openai/gpt-oss-20b",  # Напълно работещ и стабилен безплатен модел
+                max_tokens=250,              # Защита от Error 429 (Rate limit)
                 temperature=0.7
             )
             
-            # ФИКС: Добавен правилен индекс [0] за извличане на съобщението
+            # Вземане на отговора чрез правилния синтаксис
             response_text = chat_completion.choices[0].message.content
             
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
@@ -206,4 +261,3 @@ if st.session_state.weather_message:
 if st.session_state.current_ai_response:
     st.subheader(f"🤖 Съвет от {persona}:")
     st.markdown(st.session_state.current_ai_response)
-
