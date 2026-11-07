@@ -33,9 +33,10 @@ def set_preset_temperature(val):
 def get_live_weather(city_name):
     try:
         api_key = st.secrets["OPENWEATHER_API_KEY"]
-        url = f"http://openweathermap.org{city_name},BG&appid={api_key}&units=metric&lang=bg"
+        # КОРИГИРАН URL: Използва правилния API endpoint
+        url = f"https://openweathermap.org{city_name},BG&appid={api_key}&units=metric&lang=bg"
         res = requests.get(url).json()
-        if res.get("cod") == 200:
+        if str(res.get("cod")) == "200":
             return float(res["main"]["temp"]), res["weather"][0]["description"]
         else:
             return None, "Градът не е намерен"
@@ -95,32 +96,32 @@ with main_col:
         st.button("🏠 Стайна (22°C)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
     with col_b3:
         st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
-
+        
     # Слайдер и Нумерично поле
     c1, c2 = st.columns(2)
     with c1:
         st.slider("Плъзгач:", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
     with c2:
         st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
-
+        
     temperature = st.session_state.temp_val
     st.markdown(f"### Текущо избрана температура: **{temperature:.1f} °C**")
 
-# ИДЕЯ 3: Визуален интерактивен термометър (Стилизиран с CSS и HTML)
+# ИДЕЯ 3: Визуален интерактивен термометър
 with thermo_col:
     st.subheader("Термометър")
     clamped_temp = max(-30.0, min(50.0, temperature))
     percentage = ((clamped_temp + 30) / 80) * 100
     
-    if temperature < 10: 
+    if temperature < 5:
         mercury_color = "#00b4d8"
-    elif temperature < 20: 
+    elif temperature < 24:
         mercury_color = "#2a9d8f"
-    elif temperature < 30: 
+    elif temperature < 33:
         mercury_color = "#f4a261"
-    else: 
+    else:
         mercury_color = "#e63946"
-    
+        
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 220px; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 10px;">
@@ -130,18 +131,17 @@ with thermo_col:
             <div style="width: 36px; height: 36px; background: {mercury_color}; border-radius: 50%; margin-top: -10px; border: 2px solid #fff; transition: background-color 0.5s ease;"></div>
             <div style="margin-top: 8px; font-weight: bold; color: white;">{temperature:.1f}°C</div>
         </div>
-        """,
-        unsafe_allow_html=True
+        """, unsafe_allow_html=True
     )
 
 # --- ДИНАМИЧЕН ЦВЯТ НА ЦЯЛОТО ПРИЛОЖЕНИЕ ---
-if temperature < 5: 
+if temperature < 5:
     bg_color = "#007791"
-elif temperature < 23: 
+elif temperature < 23:
     bg_color = "#2E7D32"
-elif temperature < 33: 
+elif temperature < 33:
     bg_color = "#FF8F00"
-else: 
+else:
     bg_color = "#C62828"
 
 st.markdown(
@@ -154,8 +154,7 @@ st.markdown(
     .stButton>button {{ border: 2px solid white !important; background-color: rgba(255, 255, 255, 0.1) !important; color: white !important; }}
     .stButton>button:hover {{ background-color: rgba(255, 255, 255, 0.3) !important; color: white !important; }}
     </style>
-    """,
-    unsafe_allow_html=True
+    """, unsafe_allow_html=True
 )
 
 # Проверка на API Ключ за Groq
@@ -187,21 +186,33 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
     else:
         st.session_state.weather_message = "🔥 Много е горещо!"
         animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
-
+        
     placeholder = st.empty()
     for i in range(6):
         frame = animation_frames[i % len(animation_frames)]
         placeholder.markdown(f"<h1 style='text-align:center;'>{frame}</h1>", unsafe_allow_html=True)
         time.sleep(0.2)
     placeholder.empty()
-
-    try:
-        client = Groq(api_key=api_key)
+    
+      try:
+        # Ако използваш OpenAI-съвместимо прокси за този модел, 
+        # е най-добре да използваш библиотеката openai вместо groq:
+        # от openai import OpenAI
+        # client = OpenAI(api_key=api_key, base_url="ТВОЯ_BASE_URL_АКО_ИМА_ТАЪВ")
+        
+        client = Groq(api_key=api_key) # Запазваме го, в случай че проксито ти работи през Groq об обвивка
+        
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
-            st.session_state.chat_history = [
-                {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
-            ]
             
+            # Подсигуряваме правилното форматиране на системния промпт
+            system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
+            
+            if not st.session_state.chat_history:
+                st.session_state.chat_history.append(system_instruction)
+            else:
+                # Обновяваме само първия елемент (системния промпт), ако персонажа е сменен
+                st.session_state.chat_history[0] = system_instruction
+
             prompt = (
                 f"Сега температурата е {temperature} градуса по Целзий. "
                 f"Дай кратък, практичен и забавен съвет в 3 точки съобразно твоя характер: "
@@ -209,24 +220,25 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
                 f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
                 f"Отговори на български език, използвай много емоджита."
             )
+            
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
+            # Извикване на твоя специфичен модел
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
                 model="openai/gpt-oss-20b",
             )
             
-            response_text = chat_completion.choices[0].message.content
+            # Внимавай тук: в някои библиотеки синтаксисът е choices[0].message.content, а в други choices[0]['message']['content']
+            # Тъй като gpt-oss-20b често идва през специфични API-та, ето най-сигурния начин за извличане:
+            try:
+                response_text = chat_completion.choices[0].message.content
+            except (AttributeError, TypeError):
+                response_text = chat_completion.choices[0]["message"]["content"]
+
             st.session_state.chat_history.append({"role": "assistant", "content": response_text})
             st.session_state.current_ai_response = response_text
 
     except Exception as e:
-        st.error(f"Грешка при комуникацията с Groq: {e}")
+        st.error(f"Грешка при комуникацията с модела: {e}")
         st.session_state.current_ai_response = None
-
-# Извеждане на крайния резултат
-if st.session_state.weather_message:
-    st.info(st.session_state.weather_message)
-if st.session_state.current_ai_response:
-    st.subheader(f"🤖 Съвет от {persona}:")
-    st.markdown(st.session_state.current_ai_response)
