@@ -240,8 +240,6 @@ if ai_btn:
             chat_completion = client.chat.completions.create(
                 messages=messages_to_send,
                 model="openai/gpt-oss-20b",  # Напълно работещ и стабилен безплатен модел
-                max_tokens=250,              # Защита от Error 429 (Rate limit)
-                temperature=0.7
             )
             
             # Вземане на отговора чрез правилния синтаксис
