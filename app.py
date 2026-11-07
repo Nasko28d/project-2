@@ -135,11 +135,11 @@ with thermo_col:
     )
 
 # --- ДИНАМИЧЕН ЦВЯТ НА ЦЯЛОТО ПРИЛОЖЕНИЕ ---
-if temperature < 10: 
+if temperature < 5: 
     bg_color = "#007791"
-elif temperature < 20: 
+elif temperature < 23: 
     bg_color = "#2E7D32"
-elif temperature < 30: 
+elif temperature < 33: 
     bg_color = "#FF8F00"
 else: 
     bg_color = "#C62828"
