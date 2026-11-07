@@ -1,9 +1,44 @@
 import streamlit as st
 import time
-from groq import Groq  # Импортираме правилната библиотека
+from groq import Groq
 
 # Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
+
+# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА ---
+temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
+
+# Определяне на цвят на фона според температурата (меки, пастелни тонове за по-добър UX)
+if temperature < 10:
+    bg_color = "#E0F7FA"  # Свежо светлосиньо (студено)
+    text_color = "#006064"
+elif temperature < 20:
+    bg_color = "#F1F8E9"  # Бледозелено/прохладно
+    text_color = "#33691E"
+elif temperature < 30:
+    bg_color = "#FFFDE7"  # Мек топъл жълт цвят
+    text_color = "#F57F17"
+else:
+    bg_color = "#FFEBEE"  # Бледочервено (горещо)
+    text_color = "#B71C1C"
+
+# Инжектиране на CSS за промяна на background-а и добавяне на плавен преход (transition)
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-color: {bg_color} !important;
+        transition: background-color 0.5s ease;
+    }}
+    /* Опционално: промяна на цвета на заглавието за по-добър контраст */
+    h1, h2, h3 {{
+        color: {text_color} !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 st.title("🌡️ AI Температурен помощник")
 
 # Сигурно вземане на API ключа от настройките на Streamlit
@@ -14,8 +49,6 @@ except KeyError:
     st.info("💡 Ако тествате локално, създайте `.streamlit/secrets.toml`. Ако сте в Streamlit Cloud, добавете ключа в 'Advanced Settings'.")
     st.stop()
 
-temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
-
 # Инициализиране на състоянието за запазване на резултатите
 if "ai_response" not in st.session_state:
     st.session_state.ai_response = None
@@ -23,7 +56,7 @@ if "weather_message" not in st.session_state:
     st.session_state.weather_message = None
 
 if st.button("Провери", type="primary"):
-    # Изчистване на старите резултати при ново натискане (за по-добър UX)
+    # Изчистване на старите резултати при ново натискане
     st.session_state.ai_response = None
     st.session_state.weather_message = None
 
@@ -61,18 +94,12 @@ if st.button("Провери", type="primary"):
                 f"Отговори на български език, използвай подходящи емоджита."
             )
             
-            # Използваме новия актуален и поддържан модел qwen/qwen3.8-27b
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="qwen/qwen3.8-27b",
+                model="llama-3.3-70b-versatile",
             )
             
-            # Безопасно извличане на текста, съвместимо с новите модели
-            first_choice = chat_completion.choices[0]
-            if hasattr(first_choice, 'message'):
-                st.session_state.ai_response = first_choice.message.content
-            else:
-                st.session_state.ai_response = first_choice['message']['content']
+            st.session_state.ai_response = chat_completion.choices[0].message.content
                 
     except Exception as e:
         st.error(f"Грешка при комуникацията с Groq: {e}")
