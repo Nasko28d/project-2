@@ -5,34 +5,47 @@ from groq import Groq
 # Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
 
-# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА ---
+# --- ДИНАМИЧЕН ЦВЯТ НА ФОНА И КОНТРАСТЕН ТЕКСТ ---
 temperature = st.number_input("Въведи температурата в °C:", min_value=-50, max_value=60, value=20)
 
-# Определяне на цвят на фона според температурата (меки, пастелни тонове за по-добър UX)
+# Дефиниране на стилове за всяка зона (меки фонове + много тъмни цветове за текста)
 if temperature < 10:
-    bg_color = "#E0F7FA"  # Свежо светлосиньо (студено)
-    text_color = "#006064"
+    bg_color = "#E0F7FA"     # Свежо светлосиньо
+    text_color = "#004D40"   # Тъмно патешко зелено/синьо
 elif temperature < 20:
-    bg_color = "#F1F8E9"  # Бледозелено/прохладно
-    text_color = "#33691E"
+    bg_color = "#F1F8E9"     # Бледо пастелно зелено
+    text_color = "#1B5E20"   # Тъмно горско зелено
 elif temperature < 30:
-    bg_color = "#FFFDE7"  # Мек топъл жълт цвят
-    text_color = "#F57F17"
+    bg_color = "#FFFDF0"     # Мек, изключително блед крем/жълт фон (много по-светъл за четливост)
+    text_color = "#3E2723"   # Тъмно кафяво (перфектен контраст върху жълтеникав фон)
 else:
-    bg_color = "#FFEBEE"  # Бледочервено (горещо)
-    text_color = "#B71C1C"
+    bg_color = "#FFEBEE"     # Бледо червено
+    text_color = "#B71C1C"   # Тъмно бордо
 
-# Инжектиране на CSS за промяна на background-а и добавяне на плавен преход (transition)
+# Инжектиране на CSS за гарантиран контраст на всички текстови елементи в Streamlit
 st.markdown(
     f"""
     <style>
+    /* Фон на приложението */
     .stApp {{
         background-color: {bg_color} !important;
         transition: background-color 0.5s ease;
     }}
-    /* Опционално: промяна на цвета на заглавието за по-добър контраст */
-    h1, h2, h3 {{
+    
+    /* Цвят на заглавията */
+    h1, h2, h3, h4, h5, h6 {{
         color: {text_color} !important;
+    }}
+    
+    /* Цвят на обикновения текст и параграфите */
+    p, span, label, .stMarkdown {{
+        color: {text_color} !important;
+    }}
+    
+    /* Специфична корекция за текста вътре в AI отговора */
+    .stMarkdown p {{
+        color: {text_color} !important;
+        font-weight: 500;
     }}
     </style>
     """,
@@ -96,7 +109,7 @@ if st.button("Провери", type="primary"):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="openai/gpt-oss-120b",
+                model="openai/gpt-oss-120b",  # Бърз и стабилен работещ модел
             )
             
             st.session_state.ai_response = chat_completion.choices[0].message.content
