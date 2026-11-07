@@ -147,12 +147,42 @@ else:
 st.markdown(
     f"""
     <style>
-    .stApp {{ background-color: {bg_color} !important; transition: background-color 0.5s ease; }}
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{ color: #FFFFFF !important; }}
-    .stNumberInput input, .stTextInput input {{ color: #31333F !important; }}
-    .stSelectbox div[data-baseweb="select"] {{ color: #31333F !important; }}
-    .stButton>button {{ border: 2px solid white !important; background-color: rgba(255, 255, 255, 0.1) !important; color: white !important; }}
-    .stButton>button:hover {{ background-color: rgba(255, 255, 255, 0.3) !important; color: white !important; }}
+    /* Основен фон на приложението */
+    .stApp {{ 
+        background-color: {bg_color} !important; 
+        transition: background-color 0.5s ease; 
+    }}
+    
+    /* Всички основни текстове стават бели */
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{ 
+        color: #FFFFFF !important; 
+    }}
+    
+    /* Текстът НАД плъзгача/слайдера */
+    div[data-testid="stWidgetLabel"] p, div[data-testid="stSliderHandle"] > div {{
+        color: #FFFFFF !important;
+    }}
+    
+    /* Текстът ВЪТРЕ в полетата за въвеждане и селектора */
+    .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{ 
+        color: #FFFFFF !important; 
+    }}
+    
+    /* Цвят на подсказващия текст (placeholder) в полето за град */
+    input::placeholder {{
+        color: rgba(255, 255, 255, 0.6) !important;
+    }}
+    
+    /* Стилизиране на бутоните за по-добра видимост */
+    .stButton>button {{ 
+        border: 2px solid white !important; 
+        background-color: rgba(255, 255, 255, 0.1) !important; 
+        color: white !important; 
+    }}
+    .stButton>button:hover {{ 
+        background-color: rgba(255, 255, 255, 0.3) !important; 
+        color: white !important; 
+    }}
     </style>
     """, unsafe_allow_html=True
 )
