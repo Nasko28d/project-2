@@ -222,8 +222,7 @@ if ai_btn:
             
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
-                model="openai/gpt-oss-20b",
-                max_tokens=250, 
+                model="openai/gpt-oss-20b", 
             )
             
             # Извличане на текста от модела (подсигурено за всякакви формати на обекта)
