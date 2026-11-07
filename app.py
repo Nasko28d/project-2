@@ -222,7 +222,7 @@ if ai_btn:
             
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
-                model="qwen/qwen3.6-27b",
+                model="openai/gpt-oss-20b",
                 max_tokens=250, 
             )
             
