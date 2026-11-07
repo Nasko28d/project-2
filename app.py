@@ -5,13 +5,29 @@ from groq import Groq
 # Настройка на страницата
 st.set_page_config(page_title="AI Температурен помощник", page_icon="🌡️")
 
-# Инициализиране на температурата по подразбиране в състоянието на сесията
+# --- СИНХРОНИЗАЦИЯ НА СЪСТОЯНИЕТО ---
+# Инициализиране на началните стойности, ако не съществуват
 if "temp_val" not in st.session_state:
     st.session_state.temp_val = 20.0
+if "slider_input" not in st.session_state:
+    st.session_state.slider_input = 20.0
+if "num_input" not in st.session_state:
+    st.session_state.num_input = 20.0
 
-# Функция за обновяване на температурата при използване на контроли
-def update_temp(key):
-    st.session_state.temp_val = float(st.session_state[key])
+# Функция за синхронизация, когато се мести плъзгача или се пише в полето
+def sync_inputs(source_key):
+    val = float(st.session_state[source_key])
+    st.session_state.temp_val = val
+    if source_key == "slider_input":
+        st.session_state.num_input = val
+    elif source_key == "num_input":
+        st.session_state.slider_input = val
+
+# Функция за бързите бутони (presets) - обновява всички компоненти едновременно
+def set_preset_temperature(val):
+    st.session_state.temp_val = float(val)
+    st.session_state.slider_input = float(val)
+    st.session_state.num_input = float(val)
 
 st.title("🌡️ AI Температурен помощник")
 
@@ -21,14 +37,11 @@ st.subheader("Изберете температура по вашия любим
 # Начин 1: Бързи бутони (Preset Buttons)
 col_b1, col_b2, col_b3 = st.columns(3)
 with col_b1:
-    if st.button("❄️ Зимна (-5°C)", use_container_width=True):
-        st.session_state.temp_val = -5.0
+    st.button("❄️ Зимна (-5°C)", use_container_width=True, on_click=set_preset_temperature, args=(-5.0,))
 with col_b2:
-    if st.button("🏠 Стайна (22°C)", use_container_width=True):
-        st.session_state.temp_val = 22.0
+    st.button("🏠 Стайна (22°C)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
 with col_b3:
-    if st.button("🔥 Лятна жега (35°C)", use_container_width=True):
-        st.session_state.temp_val = 35.0
+    st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
 
 # Начин 2 & 3: Плъзгач и Точно поле (разположени едно до друго)
 col1, col2 = st.columns(2)
@@ -38,10 +51,9 @@ with col1:
         "Използвай плъзгача:", 
         min_value=-50.0, 
         max_value=60.0, 
-        value=float(st.session_state.temp_val),
-        step=0.5,
         key="slider_input",
-        on_change=update_temp,
+        step=0.5,
+        on_change=sync_inputs,
         args=("slider_input",)
     )
 
@@ -50,14 +62,13 @@ with col2:
         "Или въведи точно:", 
         min_value=-50.0, 
         max_value=60.0, 
-        value=float(st.session_state.temp_val),
-        step=0.1,
         key="num_input",
-        on_change=update_temp,
+        step=0.1,
+        on_change=sync_inputs,
         args=("num_input",)
     )
 
-# Финалната стойност, която ще се използва за изчисленията
+# Финалната стойност, която се използва за изчисленията и визуализацията
 temperature = st.session_state.temp_val
 
 # Показваме текущо избраната температура с по-голям текст
@@ -169,10 +180,9 @@ if st.button("Провери с AI", type="primary", use_container_width=True):
             
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
-                model="openai/gpt-oss-120b",  # Стабилен и бърз актуален модел
+                model="openai/gtr-oss-120b",
             )
             
-            # Поправка на синтаксиса: добавен е индексът [0] за достъп до обекта в списъка
             st.session_state.ai_response = chat_completion.choices[0].message.content
                 
     except Exception as e:
