@@ -222,7 +222,7 @@ if ai_btn:
             
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
-                model="llama3-8b-8192",
+                model="groq/compound",
                 max_tokens=250, 
             )
             
