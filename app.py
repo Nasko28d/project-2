@@ -97,6 +97,8 @@ with info_col:
         mercury_color = "#2a9d8f"
     elif temperature < 33:
         mercury_color = "#f4a261"
+    elif temperature < 40:
+        mercury_color = "#E34234"
     else:
         mercury_color = "#e63946"
         
@@ -115,7 +117,7 @@ with info_col:
     # Статус за оцеляване
     if temperature <= -15:
         status_text = "🧊 Ледена епоха. Сибирски студ! Не излизай навън."
-    elif temperature < 5:
+    elif temperature < 0:
         status_text = "🥶 Кочан студ. Всичко замръзва. Време е за чай."
     elif temperature < 15:
         status_text = "🧥 Хладинка. Свежо време, вземи си яке."
@@ -123,8 +125,10 @@ with info_col:
         status_text = "🏝️ Райско кътче. Перфектно пролетно време."
     elif temperature < 33:
         status_text = "☀️ Жегичка. Става за плаж и басейн."
-    else:
+    elif temperature < 40:
         status_text = "🌋 Адска жега! Асфалтът се топи около теб."
+    else:
+        status_text = "🔥 Направо пеща! Не може да се живее."
         
     st.markdown(f"""
     <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #FFEB3B; margin-bottom: 20px; color: white;">
