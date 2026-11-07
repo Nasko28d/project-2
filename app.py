@@ -236,7 +236,7 @@ if ai_btn:
             
             chat_completion = client.chat.completions.create(
                 messages=messages_to_send,
-                model="llama3-8b-8192"
+                model="openai/gpt-oss-20b"
             )
             
             response_text = chat_completion.choices[0].message.content
