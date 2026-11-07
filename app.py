@@ -222,7 +222,8 @@ if ai_btn:
             
             chat_completion = client.chat.completions.create(
                 messages=st.session_state.chat_history,
-                model="qwen/qwen3.8-27b",
+                model="llama3-8b-8192",
+                max_tokens=250, 
             )
             
             # Извличане на текста от модела (подсигурено за всякакви формати на обекта)
