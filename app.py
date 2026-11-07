@@ -78,9 +78,9 @@ with main_col:
     # Слайдер и Нумерично поле
     c1, c2 = st.columns(2)
     with c1:
-        st.slider("Плъзгач:", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs)
+        st.slider("Плъзгач:", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
     with c2:
-        st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs)
+        st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
         
     st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{temperature:.1f} °C</b></h2>", unsafe_allow_html=True)
     st.write("")
@@ -188,7 +188,7 @@ st.markdown(
 try:
     api_key = st.secrets["GROQ_API_KEY"]
 except KeyError:
-    st.error("❌ Грешка: Не е намерен 'GROQ_API_KEY' in st.secrets!")
+    st.error("❌ Грешка: Не е намерен 'GROQ_API_KEY' в st.secrets!")
     st.stop()
 
 # --- БУТОН ЗА СТАРТИРАНЕ НА AI АНАЛИЗ ---
@@ -231,11 +231,12 @@ if ai_btn:
             
             if len(st.session_state.chat_history) > 6:
                 st.session_state.chat_history = st.session_state.chat_history[-6:]
-                            messages_to_send = [system_instruction] + st.session_state.chat_history
+                
+            messages_to_send = [system_instruction] + st.session_state.chat_history
             
             chat_completion = client.chat.completions.create(
                 messages=messages_to_send,
-                model="llama3-8b-8192"  # Променен работещ безплатен модел
+                model="llama3-8b-8192"
             )
             
             response_text = chat_completion.choices[0].message.content
@@ -253,3 +254,4 @@ if st.session_state.weather_message:
 if st.session_state.current_ai_response:
     st.subheader(f"🤖 Съвет от {persona}:")
     st.markdown(st.session_state.current_ai_response)
+
