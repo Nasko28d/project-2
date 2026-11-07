@@ -198,18 +198,16 @@ if ai_btn:
         time.sleep(0.2)
     placeholder.empty()
     
-        try:
+    try:
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             
-            # Дефинираме системната инструкция
             system_instruction = {"role": "system", "content": f"{persona_prompts[persona]} Важно: Винаги помни историята на разговора ни."}
             
-            # КОРИГИРАНО: Поддържаме chat_history винаги като списък (list)
+            # Поддържаме правилната списъчна структура за избягване на list indices грешката
             if not st.session_state.chat_history:
                 st.session_state.chat_history = [system_instruction]
             else:
-                # Ако вече има история, просто обновяваме първия елемент (системния промпт), без да чупим списъка
                 st.session_state.chat_history[0] = system_instruction
 
             prompt = (
@@ -219,6 +217,7 @@ if ai_btn:
                 f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
                 f"Отговори на български език, използвай много емоджита."
             )
+
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             
             chat_completion = client.chat.completions.create(
