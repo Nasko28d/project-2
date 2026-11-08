@@ -6,6 +6,8 @@ from groq import Groq
 st.set_page_config(page_title="Супер AI Температурен асистент", page_icon="🌡️", layout="wide")
 
 # --- ИНИЦИАЛИЗИРАНЕ НА СЪСТОЯНИЕТО ---
+if "unit" not in st.session_state:
+    st.session_state.unit = "°C"
 if "temp_val" not in st.session_state:
     st.session_state.temp_val = 22.0
 if "slider_input" not in st.session_state:
@@ -19,6 +21,31 @@ if "weather_message" not in st.session_state:
 if "current_ai_response" not in st.session_state:
     st.session_state.current_ai_response = None
 
+# Функции за преобразуване
+def c_to_f(c):
+    return (c * 1.8) + 32
+
+def f_to_c(f):
+    return (f - 32) / 1.8
+
+# Синхронизация при промяна на мерната единица от менюто
+def handle_unit_change():
+    current_val = st.session_state.temp_val
+    if st.session_state.unit_selector == "°C" and st.session_state.unit == "°F":
+        # Преминаваме от F към C
+        converted = round(f_to_c(current_val), 1)
+        st.session_state.unit = "°C"
+    elif st.session_state.unit_selector == "°F" and st.session_state.unit == "°C":
+        # Преминаваме от C към F
+        converted = round(c_to_f(current_val), 1)
+        st.session_state.unit = "°F"
+    else:
+        return
+        
+    st.session_state.temp_val = converted
+    st.session_state.slider_input = converted
+    st.session_state.num_input = converted
+
 def sync_inputs(source_key):
     val = float(st.session_state[source_key])
     st.session_state.temp_val = val
@@ -27,16 +54,32 @@ def sync_inputs(source_key):
     elif source_key == "num_input":
         st.session_state.slider_input = val
 
-def set_preset_temperature(val):
-    st.session_state.temp_val = float(val)
-    st.session_state.slider_input = float(val)
-    st.session_state.num_input = float(val)
+def set_preset_temperature(val_c):
+    # Пресетите се подават в Целзий, преизчисляват се спрямо избраната единица
+    if st.session_state.unit == "°F":
+        val = round(c_to_f(val_c), 1)
+    else:
+        val = float(val_c)
+    st.session_state.temp_val = val
+    st.session_state.slider_input = val
+    st.session_state.num_input = val
 
 st.title("🌡️ Супер AI Температурен асистент")
 
-# --- СТРАНИЧНА ЛЕНТА (SIDEBAR): Персони ---
+# --- СТРАНИЧНА ЛЕНТА (SIDEBAR) ---
 with st.sidebar:
     st.header("⚙️ Опции и Екстри")
+    
+    # Бутон за превключване на мерната единица
+    st.subheader("📏 Мерна единица:")
+    st.radio(
+        "Избери скала за показване:",
+        ["°C", "°F"],
+        key="unit_selector",
+        index=0 if st.session_state.unit == "°C" else 1,
+        on_change=handle_unit_change
+    )
+    
     st.subheader("👤 Избери характер на AI:")
     persona = st.selectbox(
         "Кой искаш да ти даде съвет?",
@@ -49,36 +92,36 @@ with st.sidebar:
         "Професионалният Метеоролог 📊": "Ти си сериозен, научен метеоролог и климатолог. Даваш точни, научно обосновани съвети за обличане, атмосферно налягане, хидратация и UV индекс с висок професионализъм."
     }
 
-# --- ДИНАМИЧЕН ЦВЯТ НА ПРИЛОЖЕНИЕТО (РЕАЛИСТИЧЕН СПЕКТЪР) ---
-temperature = st.session_state.temp_val
+# Пресмятане на базовите стойности в Целзий за логиката на интерфейса
+display_temp = st.session_state.temp_val
+if st.session_state.unit == "°F":
+    temp_c = f_to_c(display_temp)
+    temp_f = display_temp
+    min_slide, max_slide = -22.0, 122.0
+else:
+    temp_c = display_temp
+    temp_f = c_to_f(display_temp)
+    min_slide, max_slide = -30.0, 50.0
 
-if temperature <= 0:
-    # Твърдо ледено синьо за всички минусови температури (колкото по-студено, толкова по-тъмно синьо)
-    # При 0°C е ярко сино, при -30°C отива към тъмно синьо
-    clamped_cold = max(-30.0, temperature)
-    blue_ratio = (clamped_cold - (-30.0)) / 30.0  # 0.0 при -30°C, 1.0 при 0°C
-    r = int(0 + (0 * blue_ratio))
+# --- ДИНАМИЧЕН ЦВЯТ НА ПРИЛОЖЕНИЕТО (РЕАЛИСТИЧЕН СПЕКТЪР НА БАЗА ЦЕЛЗИЙ) ---
+if temp_c <= 0:
+    clamped_cold = max(-30.0, temp_c)
+    blue_ratio = (clamped_cold - (-30.0)) / 30.0
+    r = int(0)
     g = int(50 + (120 * blue_ratio))
     b = int(100 + (155 * blue_ratio))
-
-elif temperature <= 18:
-    # Преход от ледено синьо (0°C) до свежо зелено (18°C)
-    # Зеленият нюанс започва да доминира едва след 10-12 градуса
-    ratio = (temperature - 0) / 18.0
+elif temp_c <= 18:
+    ratio = (temp_c - 0) / 18.0
     r = int(0 + (46 * ratio))
     g = int(170 - (45 * ratio))
     b = int(255 - (205 * ratio))
-
-elif temperature <= 28:
-    # Преход от зелено (18°C) до топло оранжево/жълто (28°C)
-    ratio = (temperature - 18) / 10.0
+elif temp_c <= 28:
+    ratio = (temp_c - 18) / 10.0
     r = int(46 + (209 * ratio))
     g = int(125 + (18 * ratio))
     b = int(50 - (50 * ratio))
-
 else:
-    # Над 28°C - Преход към наситено адско червено (40°C+)
-    clamped_hot = min(45.0, temperature)
+    clamped_hot = min(45.0, temp_c)
     ratio = (clamped_hot - 28) / 17.0
     r = int(255 - (57 * ratio))
     g = int(143 - (110 * ratio))
@@ -86,7 +129,7 @@ else:
 
 bg_color = f"rgb({r}, {g}, {b})"
 
-# --- ОСНОВЕН ПАНЕЛ: Балансирано разделение на колоните (2:1 мащаб) ---
+# --- ОСНОВЕН ПАНЕЛ ---
 main_col, info_col = st.columns([2, 1], gap="large")
 
 with main_col:
@@ -101,29 +144,29 @@ with main_col:
     with col_b3:
         st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
         
-    # Слайдер и Нумерично поле
+    # Динамичен Слайдер и Нумерично поле спрямо единицата
     c1, c2 = st.columns(2)
     with c1:
-        st.slider("Плъзгач:", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
+        st.slider(f"Плъзгач ({st.session_state.unit}):", min_value=min_slide, max_value=max_slide, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
     with c2:
-        st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
+        st.number_input(f"Точно въвеждане ({st.session_state.unit}):", min_value=min_slide, max_value=max_slide, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
         
-    st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{temperature:.1f} °C</b></h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{display_temp:.1f} {st.session_state.unit}</b></h2>", unsafe_allow_html=True)
     st.write("")
     ai_btn = st.button("Провери с AI", type="primary", use_container_width=True)
 
 with info_col:
-    # Визуален термометър
-    clamped_temp = max(-30.0, min(50.0, temperature))
+    # Визуален термометър (Скала базирана на Целзий)
+    clamped_temp = max(-30.0, min(50.0, temp_c))
     percentage = ((clamped_temp + 30) / 80) * 100
     
-    if temperature < 5:
+    if temp_c < 5:
         mercury_color = "#00b4d8"
-    elif temperature < 24:
+    elif temp_c < 24:
         mercury_color = "#2a9d8f"
-    elif temperature < 33:
+    elif temp_c < 33:
         mercury_color = "#f4a261"
-    elif temperature < 40:
+    elif temp_c < 40:
         mercury_color = "#E34234"
     else:
         mercury_color = "#e63946"
@@ -135,23 +178,23 @@ with info_col:
                 <div style="width: 100%; height: {percentage}%; background: {mercury_color}; transition: height 0.5s ease, background-color 0.5s ease;"></div>
             </div>
             <div style="width: 30px; height: 30px; background: {mercury_color}; border-radius: 50%; margin-top: -8px; border: 2px solid #fff; transition: background-color 0.5s ease;"></div>
-            <div style="margin-top: 5px; font-weight: bold; color: white;">{temperature:.1f}°C</div>
+            <div style="margin-top: 5px; font-weight: bold; color: white;">{temp_c:.1f}°C / {temp_f:.1f}°F</div>
         </div>
         """, unsafe_allow_html=True
     )
     
     # Статус за оцеляване
-    if temperature <= -15:
+    if temp_c <= -15:
         status_text = "🧊 Ледена епоха. Сибирски студ! Не излизай навън."
-    elif temperature < 0:
+    elif temp_c < 0:
         status_text = "🥶 Кочан студ. Всичко замръзва. Време е за чай."
-    elif temperature < 15:
+    elif temp_c < 15:
         status_text = "🧥 Хладинка. Свежо време, вземи си яке."
-    elif temperature < 25:
+    elif temp_c < 25:
         status_text = "🏝️ Райско кътче. Перфектно пролетно време."
-    elif temperature < 33:
+    elif temp_c < 33:
         status_text = "☀️ Жегичка. Става за плаж и басейн."
-    elif temperature < 40:
+    elif temp_c < 40:
         status_text = "🌋 Адска жег! Асфалтът се топи около теб."
     else:
         status_text = "🔥 Направо пещ! Не може да се живее."
@@ -163,13 +206,13 @@ with info_col:
     """, unsafe_allow_html=True)
     
     # Визуален гардероб
-    if temperature < 0:
+    if temp_c < 0:
         clothes = "🧥 Дебело зимно яке, 🧣 Шал, 🧤 Ръкавици, 🧦 Вълнени чорапи"
-    elif temperature < 12:
+    elif temp_c < 12:
         clothes = "🧥 Палто/Яке, 👖 Дълги панталони, 👟 Маратонки"
-    elif temperature < 23:
+    elif temp_c < 23:
         clothes = "👕 Суичър или жилетка, 👖 Дънки, 👟 Обувки"
-    elif temperature < 30:
+    elif temp_c < 30:
         clothes = "👕 Тениска, 🩳 Къси панталони, 👟 Сандали"
     else:
         clothes = "🩲 Бански костюм, 🩴 Джапанки, 🕶️ Очила, 🧢 Шапка"
@@ -202,10 +245,10 @@ st.markdown(
         background-color: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
     }}
-    .stButton>button:hover {{
+    .stButton>button:hover {
         background-color: rgba(255, 255, 255, 0.3) !important;
         color: white !important;
-    }}
+    }
     </style>
     """, unsafe_allow_html=True
 )
@@ -222,23 +265,22 @@ if ai_btn:
     st.session_state.weather_message = None
     st.session_state.current_ai_response = None
     
-    if temperature < 10:
-        st.session_state.weather_message = "🥶 Студено е!"
+    if temp_c < 10:
+        st.session_state.weather_message = f"🥶 Студено е! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
         animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
-    elif temperature < 20:
-        st.session_state.weather_message = "🌥️ Прохладно е."
+    elif temp_c < 20:
+        st.session_state.weather_message = f"🌥️ Прохладно е. ({temp_c:.1f}°C / {temp_f:.1f}°F)"
         animation_frames = ["☁️ 🌤️ ☁️", "🌤️ ☁️ 🌤️"]
-    elif temperature < 30:
-        st.session_state.weather_message = "☀️ Приятно топло е!"
+    elif temp_c < 30:
+        st.session_state.weather_message = f"☀️ Приятно топло е! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
         animation_frames = ["🌤️ ☀️ 🌤️", "☀️ 🌤️ ☀️"]
     else:
-        st.session_state.weather_message = "🔥 Много е горещо!"
+        st.session_state.weather_message = f"🔥 Много е горещо! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
         animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
         
     placeholder = st.empty()
     for i in range(6):
         frame = animation_frames[i % len(animation_frames)]
-
         placeholder.markdown(f"<h1 style='text-align:center;'>{frame}</h1>", unsafe_allow_html=True)
         time.sleep(0.2)
     placeholder.empty()
@@ -248,7 +290,7 @@ if ai_btn:
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             system_instruction = {"role": "system", "content": persona_prompts[persona]}
             prompt = (
-                f"Сега температурата е {temperature} градуса по Целзий. "
+                f"Сега температурата е {temp_c:.1f} градуса по Целзий ({temp_f:.1f} градуса по Фаренхайт). "
                 f"Дай кратък, практичен и забавен съвет в 3 точки съобразно твоя характер: "
                 f"1. Как да се облечем. 2. Какво да правим. 3. Важен съвет за здравето/сезона. "
                 f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
