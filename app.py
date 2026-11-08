@@ -44,32 +44,40 @@ with st.sidebar:
     )
     
     persona_prompts = {
-        "Грижовната Баба 👵": "Ти си любяща, но изключително притеснена българска баба. Караш се на потребителя, ако не носи шапка, настояваш да си обуе вълнени чорапи, предлагаш му топла супа или чай и говориш мило, използвайки думи като 'чедо', 'бабиното' и 'настинка'. Коментирай температурата както в Целзий, така и в нейния Фаренхайт еквивалент.",
-        "Саркастичният Комедиант 🎭": "Ти си изключително саркастичен и забавен стендъп комедиант. Подиграваш се на избора на температура, даваш абсурдни и смешни съвети за оцеляване и използваш черен хумор и ирония. Сравни стойностите в Целзий и Фаренхайт по ироничен и абсурден начин.",
-        "Професионалният Метеоролог 📊": "Ти си сериозен, научен метеоролог и климатолог. Даваш точни, научно обосновани съвети за обличане, атмосферно налягане, хидратация и UV индекс с висок професионализъм. Спомени прецизно и двете скали (°C и °F) в твоя научен доклад."
+        "Грижовната Баба 👵": "Ти си любяща, но изключително притеснена българска баба. Караш се на потребителя, ако не носи шапка, настояваш да си обуе вълнени чорапи, предлагаш му топла супа или чай и говориш мило, използвайки думи като 'чедо', 'бабиното' и 'настинка'.",
+        "Саркастичният Комедиант 🎭": "Ти си изключително саркастичен и забавен стендъп комедиант. Подиграваш се на избора на температура, даваш абсурдни и смешни съвети за оцеляване и използваш черен хумор и ирония.",
+        "Професионалният Метеоролог 📊": "Ти си сериозен, научен метеоролог и климатолог. Даваш точни, научно обосновани съвети за обличане, атмосферно налягане, хидратация и UV индекс с висок професионализъм."
     }
 
 # --- ДИНАМИЧЕН ЦВЯТ НА ПРИЛОЖЕНИЕТО (РЕАЛИСТИЧЕН СПЕКТЪР) ---
 temperature = st.session_state.temp_val
-temperature_f = (temperature * 1.8) + 32
 
 if temperature <= 0:
+    # Твърдо ледено синьо за всички минусови температури (колкото по-студено, толкова по-тъмно синьо)
+    # При 0°C е ярко сино, при -30°C отива към тъмно синьо
     clamped_cold = max(-30.0, temperature)
-    blue_ratio = (clamped_cold - (-30.0)) / 30.0
-    r = int(0)
+    blue_ratio = (clamped_cold - (-30.0)) / 30.0  # 0.0 при -30°C, 1.0 при 0°C
+    r = int(0 + (0 * blue_ratio))
     g = int(50 + (120 * blue_ratio))
     b = int(100 + (155 * blue_ratio))
+
 elif temperature <= 18:
+    # Преход от ледено синьо (0°C) до свежо зелено (18°C)
+    # Зеленият нюанс започва да доминира едва след 10-12 градуса
     ratio = (temperature - 0) / 18.0
     r = int(0 + (46 * ratio))
     g = int(170 - (45 * ratio))
     b = int(255 - (205 * ratio))
+
 elif temperature <= 28:
+    # Преход от зелено (18°C) до топло оранжево/жълто (28°C)
     ratio = (temperature - 18) / 10.0
     r = int(46 + (209 * ratio))
     g = int(125 + (18 * ratio))
     b = int(50 - (50 * ratio))
+
 else:
+    # Над 28°C - Преход към наситено адско червено (40°C+)
     clamped_hot = min(45.0, temperature)
     ratio = (clamped_hot - 28) / 17.0
     r = int(255 - (57 * ratio))
@@ -78,34 +86,34 @@ else:
 
 bg_color = f"rgb({r}, {g}, {b})"
 
-# --- ОСНОВЕН ПАНЕЛ ---
+# --- ОСНОВЕН ПАНЕЛ: Балансирано разделение на колоните (2:1 мащаб) ---
 main_col, info_col = st.columns([2, 1], gap="large")
 
 with main_col:
     st.subheader("Изберете температура ръчно:")
     
-    # Бързи бутони с двете мерни единици
+    # Бързи бутони
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
-        st.button("❄️ Зимна (-5°C / 23°F)", use_container_width=True, on_click=set_preset_temperature, args=(-5.0,))
+        st.button("❄️ Зимна (-5°C)", use_container_width=True, on_click=set_preset_temperature, args=(-5.0,))
     with col_b2:
-        st.button("🏠 Стайна (22°C / 71.6°F)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
+        st.button("🏠 Стайна (22°C)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
     with col_b3:
-        st.button("🔥 Лятна жега (35°C / 95°F)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
+        st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
         
     # Слайдер и Нумерично поле
     c1, c2 = st.columns(2)
     with c1:
-        st.slider("Плъзгач (°C):", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
+        st.slider("Плъзгач:", min_value=-30.0, max_value=50.0, key="slider_input", step=0.5, on_change=sync_inputs, args=("slider_input",))
     with c2:
-        st.number_input("Точно въвеждане (°C):", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
+        st.number_input("Точно въвеждане:", min_value=-30.0, max_value=50.0, key="num_input", step=0.1, on_change=sync_inputs, args=("num_input",))
         
-    st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{temperature:.1f} °C</b> / <b>{temperature_f:.1f} °F</b></h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='margin-top:20px;'>Текущо избрана температура: <b>{temperature:.1f} °C</b></h2>", unsafe_allow_html=True)
     st.write("")
     ai_btn = st.button("Провери с AI", type="primary", use_container_width=True)
 
 with info_col:
-    # --- ВИЗУАЛЕН ТЕРМОМЕТЪР С НАПЪЛНО СИМЕТРИЧНА ДВОЙНА СКАЛА (°C и °F) ---
+    # Визуален термометър
     clamped_temp = max(-30.0, min(50.0, temperature))
     percentage = ((clamped_temp + 30) / 80) * 100
     
@@ -122,64 +130,31 @@ with info_col:
         
     st.markdown(
         f"""
-        <div style="display: flex; align-items: center; justify-content: center; height: 240px; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.15);">
-            <!-- Скала Целзий (Отляво) -->
-            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: right; margin-right: 12px; font-family: monospace; font-size: 11px; color: #FFFFFF; line-height: 1;">
-                <div>50°C —</div>
-                <div>30°C —</div>
-                <div>10°C —</div>
-                <div>-10°C —</div>
-                <div>-30°C —</div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: rgba(255,255,255,0.15); border-radius: 15px; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.2);">
+            <div style="position: relative; width: 20px; height: 110px; background: #e0e0e0; border-radius: 12px; border: 2px solid #fff; overflow: hidden; display: flex; align-items: flex-end;">
+                <div style="width: 100%; height: {percentage}%; background: {mercury_color}; transition: height 0.5s ease, background-color 0.5s ease;"></div>
             </div>
-            
-            <!-- Тяло на термометъра -->
-            <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
-                <!-- Стъклена тръбичка -->
-                <div style="position: relative; width: 16px; height: 140px; background: rgba(255,255,255,0.2); border-radius: 8px; border: 2px solid #fff; overflow: hidden; display: flex; align-items: flex-end; z-index: 2;">
-                    <!-- Живачен стълб -->
-                    <div style="width: 100%; height: {percentage}%; background: {mercury_color}; transition: height 0.5s ease, background-color 0.5s ease;"></div>
-                </div>
-                <!-- Резервоар -->
-                <div style="width: 26px; height: 26px; background: {mercury_color}; border-radius: 50%; margin-top: -6px; border: 2px solid #fff; transition: background-color 0.5s ease; z-index: 1;"></div>
-            </div>
-            
-            <!-- Скала Фаренхайт (Отдясно) -->
-            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: left; margin-left: 12px; font-family: monospace; font-size: 11px; color: #FFFFFF; line-height: 1;">
-                <div>— 122°F</div>
-                <div>— 86°F</div>
-                <div>— 50°F</div>
-                <div>— 14°F</div>
-                <div>— -22°F</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    
-    # Дигитален дисплей под термометъра
-    st.markdown(
-        f"""
-        <div style="text-align: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
-            <span style="font-size: 22px; font-weight: bold; color: white; display: block;">{temperature:.1f} °C</span>
-            <span style="font-size: 16px; color: rgba(255,255,255,0.7); font-weight: 500;">{temperature_f:.1f} °F</span>
+            <div style="width: 30px; height: 30px; background: {mercury_color}; border-radius: 50%; margin-top: -8px; border: 2px solid #fff; transition: background-color 0.5s ease;"></div>
+            <div style="margin-top: 5px; font-weight: bold; color: white;">{temperature:.1f}°C</div>
         </div>
         """, unsafe_allow_html=True
     )
     
     # Статус за оцеляване
     if temperature <= -15:
-        status_text = f"🧊 Ледена епоха. Сибирски студ ({temperature:.0f}°C / {temperature_f:.0f}°F)! Не излизай навън."
+        status_text = "🧊 Ледена епоха. Сибирски студ! Не излизай навън."
     elif temperature < 0:
-        status_text = f"🥶 Кочан студ ({temperature:.0f}°C / {temperature_f:.0f}°F). Всичко замръзва. Време е за чай."
+        status_text = "🥶 Кочан студ. Всичко замръзва. Време е за чай."
     elif temperature < 15:
-        status_text = f"🧥 Хладинка ({temperature:.0f}°C / {temperature_f:.0f}°F). Свежо време, вземи си яке."
+        status_text = "🧥 Хладинка. Свежо време, вземи си яке."
     elif temperature < 25:
-        status_text = f"🏝️ Райско кътче ({temperature:.0f}°C / {temperature_f:.0f}°F). Перфектно пролетно време."
+        status_text = "🏝️ Райско кътче. Перфектно пролетно време."
     elif temperature < 33:
-        status_text = f"☀️ Жегичка ({temperature:.0f}°C / {temperature_f:.0f}°F). Става за плаж и басейн."
+        status_text = "☀️ Жегичка. Става за плаж и басейн."
     elif temperature < 40:
-        status_text = f"🌋 Адска жег ({temperature:.0f}°C / {temperature_f:.0f}°F)! Асфалтът се топи около теб."
+        status_text = "🌋 Адска жег! Асфалтът се топи около теб."
     else:
-        status_text = f"🔥 Направо пещ ({temperature:.0f}°C / {temperature_f:.0f}°F)! Не може да се живее."
+        status_text = "🔥 Направо пещ! Не може да се живее."
         
     st.markdown(f"""
     <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #FFEB3B; margin-bottom: 20px; color: white;">
@@ -205,16 +180,21 @@ with info_col:
     </div>
     """, unsafe_allow_html=True)
 
-# --- ГЛОБАЛЕН CSS СТИЛ ---
+# --- ГЛОБАЛЕН И КОРИГИРАН CSS СТИЛ ---
+st.markdown(
+    f"""
     <style>
     .stApp {{
         background-color: {bg_color} !important;
         transition: background-color 0.5s ease;
     }}
-    h1, h2, h3, h4, h5, h6, p, span, .stMarkdown, .stSubheader {{
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader {{
         color: #FFFFFF !important;
     }}
     div[data-testid="stWidgetLabel"] p {{
+        color: #FFFFFF !important;
+    }}
+    .stNumberInput input, .stTextInput input, div[data-baseweb="select"] *, input {{
         color: #FFFFFF !important;
     }}
     .stButton>button {{
@@ -243,31 +223,32 @@ if ai_btn:
     st.session_state.current_ai_response = None
     
     if temperature < 10:
-        st.session_state.weather_message = f"🥶 Студено е! ({temperature:.1f}°C / {temperature_f:.1f}°F)"
+        st.session_state.weather_message = "🥶 Студено е!"
         animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
     elif temperature < 20:
-        st.session_state.weather_message = f"🌥️ Прохладно е. ({temperature:.1f}°C / {temperature_f:.1f}°F)"
+        st.session_state.weather_message = "🌥️ Прохладно е."
         animation_frames = ["☁️ 🌤️ ☁️", "🌤️ ☁️ 🌤️"]
     elif temperature < 30:
-        st.session_state.weather_message = f"☀️ Приятно топло е! ({temperature:.1f}°C / {temperature_f:.1f}°F)"
+        st.session_state.weather_message = "☀️ Приятно топло е!"
         animation_frames = ["🌤️ ☀️ 🌤️", "☀️ 🌤️ ☀️"]
     else:
-        st.session_state.weather_message = f"🔥 Много е горещо! ({temperature:.1f}°C / {temperature_f:.1f}°F)"
+        st.session_state.weather_message = "🔥 Много е горещо!"
         animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
         
     placeholder = st.empty()
     for i in range(6):
         frame = animation_frames[i % len(animation_frames)]
+
         placeholder.markdown(f"<h1 style='text-align:center;'>{frame}</h1>", unsafe_allow_html=True)
         time.sleep(0.2)
     placeholder.empty()
     
     try:
         client = Groq(api_key=api_key)
-        with st.spinner(f"🤖 {persona} обмисля съветите si..."):
+        with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             system_instruction = {"role": "system", "content": persona_prompts[persona]}
             prompt = (
-                f"Сега температурата е {temperature} градуса по Целзий ({temperature_f:.1f} градуса по Фаренхайт). "
+                f"Сега температурата е {temperature} градуса по Целзий. "
                 f"Дай кратък, практичен и забавен съвет в 3 точки съобразно твоя характер: "
                 f"1. Как да се облечем. 2. Какво да правим. 3. Важен съвет за здравето/сезона. "
                 f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
