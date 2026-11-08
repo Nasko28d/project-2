@@ -105,7 +105,7 @@ with main_col:
     ai_btn = st.button("Провери с AI", type="primary", use_container_width=True)
 
 with info_col:
-    # --- ВИЗУАЛЕН ТЕРМОМЕТЪР С ДВОЙНА СКАЛА (°C и °F) ---
+    # --- ВИЗУАЛЕН ТЕРМОМЕТЪР С НАПЪЛНО СИМЕТРИЧНА ДВОЙНА СКАЛА (°C и °F) ---
     clamped_temp = max(-30.0, min(50.0, temperature))
     percentage = ((clamped_temp + 30) / 80) * 100
     
@@ -132,8 +132,8 @@ with info_col:
                 <div>-30°C —</div>
             </div>
             
-            <!-- Тяло на термометъра -->
-            <div style="display: flex; flex-direction: column; align-items: center; position: relative; margin-top: -15px;">
+            <!-- Тяло на термометъра (Перфектно подравнено по центъра) -->
+            <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
                 <!-- Стъклена тръбичка -->
                 <div style="position: relative; width: 16px; height: 140px; background: rgba(255,255,255,0.2); border-radius: 8px; border: 2px solid #fff; overflow: hidden; display: flex; align-items: flex-end; z-index: 2;">
                     <!-- Живачен стълб -->
