@@ -245,10 +245,10 @@ st.markdown(
         background-color: rgba(255, 255, 255, 0.1) !important;
         color: white !important;
     }}
-    .stButton>button:hover {
+    .stButton>button:hover {{
         background-color: rgba(255, 255, 255, 0.3) !important;
         color: white !important;
-    }
+    }}
     </style>
     """, unsafe_allow_html=True
 )
