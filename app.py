@@ -120,11 +120,12 @@ with info_col:
     else:
         mercury_color = "#e63946"
         
+    # Всичко се подава в един общ f-string към st.markdown
     st.markdown(
         f"""
         <div style="display: flex; align-items: center; justify-content: center; height: 240px; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.15);">
             <!-- Скала Целзий (Отляво) -->
-            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: right; margin-right: 12px; font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1;">
+            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: right; margin-right: 12px; font-family: monospace; font-size: 11px; color: #FFFFFF; line-height: 1;">
                 <div>50°C —</div>
                 <div>30°C —</div>
                 <div>10°C —</div>
@@ -132,7 +133,7 @@ with info_col:
                 <div>-30°C —</div>
             </div>
             
-            <!-- Тяло на термометъра (Перфектно подравнено по центъра) -->
+            <!-- Тяло на термометъра -->
             <div style="display: flex; flex-direction: column; align-items: center; position: relative;">
                 <!-- Стъклена тръбичка -->
                 <div style="position: relative; width: 16px; height: 140px; background: rgba(255,255,255,0.2); border-radius: 8px; border: 2px solid #fff; overflow: hidden; display: flex; align-items: flex-end; z-index: 2;">
@@ -144,7 +145,7 @@ with info_col:
             </div>
             
             <!-- Скала Фаренхайт (Отдясно) -->
-            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: left; margin-left: 12px; font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1;">
+            <div style="display: flex; flex-direction: column; justify-content: space-between; height: 140px; text-align: left; margin-left: 12px; font-family: monospace; font-size: 11px; color: #FFFFFF; line-height: 1;">
                 <div>— 122°F</div>
                 <div>— 86°F</div>
                 <div>— 50°F</div>
@@ -154,6 +155,17 @@ with info_col:
         </div>
         """, unsafe_allow_html=True
     )
+    
+    # Дигитален дисплей под термометъра
+    st.markdown(
+        f"""
+        <div style="text-align: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
+            <span style="font-size: 22px; font-weight: bold; color: white; display: block;">{temperature:.1f} °C</span>
+            <span style="font-size: 16px; color: rgba(255,255,255,0.7); font-weight: 500;">{temperature_f:.1f} °F</span>
+        </div>
+        """, unsafe_allow_html=True
+    )
+
     
     # Дигитален дисплей под термометъра
     st.markdown(
