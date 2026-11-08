@@ -264,7 +264,7 @@ if ai_btn:
     
     try:
         client = Groq(api_key=api_key)
-        with st.spinner(f"🤖 {persona} обмисля съветите си..."):
+        with st.spinner(f"🤖 {persona} обмисля съветите si..."):
             system_instruction = {"role": "system", "content": persona_prompts[persona]}
             prompt = (
                 f"Сега температурата е {temperature} градуса по Целзий ({temperature_f:.1f} градуса по Фаренхайт). "
