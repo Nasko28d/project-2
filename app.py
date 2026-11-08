@@ -44,7 +44,7 @@ with st.sidebar:
     )
     
     persona_prompts = {
-        "Грижовната Баба 👵": "Ти си любяща, но изключително притеснена българска баба. Караш се на потребителя, ако не носи шапка, настояваш да си обуе вълнени чорапи, предлагаш му топла супа или чай и говориш мило, използвайки думи като 'чедо', 'бабиното' и 'настинка'. Коментирай температурата както в Целзий, така и в нейния Фаренхайт еквивалент, за да звучиш още по-забавно разтревожена.",
+        "Грижовната Баба 👵": "Ти си любяща, но изключително притеснена българска баба. Караш се на потребителя, ако не носи шапка, настояваш да си обуе вълнени чорапи, предлагаш му топла супа или чай и говориш мило, използвайки думи като 'чедо', 'бабиното' и 'настинка'. Коментирай температурата както в Целзий, така и в нейния Фаренхайт еквивалент.",
         "Саркастичният Комедиант 🎭": "Ти си изключително саркастичен и забавен стендъп комедиант. Подиграваш се на избора на температура, даваш абсурдни и смешни съвети за оцеляване и използваш черен хумор и ирония. Сравни стойностите в Целзий и Фаренхайт по ироничен и абсурден начин.",
         "Професионалният Метеоролог 📊": "Ти си сериозен, научен метеоролог и климатолог. Даваш точни, научно обосновани съвети за обличане, атмосферно налягане, хидратация и UV индекс с висок професионализъм. Спомени прецизно и двете скали (°C и °F) в твоя научен доклад."
     }
@@ -120,7 +120,6 @@ with info_col:
     else:
         mercury_color = "#e63946"
         
-    # Всичко се подава в един общ f-string към st.markdown
     st.markdown(
         f"""
         <div style="display: flex; align-items: center; justify-content: center; height: 240px; background: rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.15);">
@@ -165,19 +164,8 @@ with info_col:
         </div>
         """, unsafe_allow_html=True
     )
-
     
-    # Дигитален дисплей под термометъра
-    st.markdown(
-        f"""
-        <div style="text-align: center; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
-            <span style="font-size: 22px; font-weight: bold; color: white; display: block;">{temperature:.1f} °C</span>
-            <span style="font-size: 16px; color: rgba(255,255,255,0.7); font-weight: 500;">{temperature_f:.1f} °F</span>
-        </div>
-        """, unsafe_allow_html=True
-    )
-    
-    # Статус за оцеляване (С добавени °C и °F)
+    # Статус за оцеляване
     if temperature <= -15:
         status_text = f"🧊 Ледена епоха. Сибирски студ ({temperature:.0f}°C / {temperature_f:.0f}°F)! Не излизай навън."
     elif temperature < 0:
@@ -213,13 +201,11 @@ with info_col:
         
     st.markdown(f"""
     <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 12px; border-left: 5px solid #4CAF50; color: white;">
-        <b>🎒 Препоръчителен гардероб:</b><br>{clothes}
+        <b style="font-size: 16px;">🎒 Препоръчителен гардероб:</b><br>{clothes}
     </div>
     """, unsafe_allow_html=True)
 
-# --- ГЛОБАЛЕН И КОРИГИРАН CSS СТИЛ ---
-st.markdown(
-    f"""
+# --- ГЛОБАЛЕН CSS СТИЛ ---
     <style>
     .stApp {{
         background-color: {bg_color} !important;
