@@ -1,1 +1,1 @@
-.streamlit/
+.streamlit/secrets.toml/GROQ_API_KEY = "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"
