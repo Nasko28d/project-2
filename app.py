@@ -274,18 +274,7 @@ with info_col:
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        f"""
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: {card_bg}; border-radius: 15px; padding: 10px; margin-bottom: 20px; border: 1px solid {border_color}; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
-            <div style="position: relative; width: 20px; height: 110px; background: {therm_bg}; border-radius: 12px; border: 2px solid {text_color}; overflow: hidden; display: flex; align-items: flex-end;">
-                <div style="width: 100%; height: {percentage}%; background: {mercury_color}; transition: height 0.5s ease, background-color 0.5s ease;"></div>
-            </div>
-            <div style="width: 30px; height: 30px; background: {mercury_color}; border-radius: 50%; margin-top: -8px; border: 2px solid {text_color}; transition: background-color 0.5s ease;"></div>
-            <div style="margin-top: 5px; font-weight: bold; color: {text_color};">{temp_c:.1f}°C / {temp_f:.1f}°F</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+   
 
     # Статус за оцеляване
     if temp_c <= -15:
