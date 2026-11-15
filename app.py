@@ -35,6 +35,10 @@ def c_to_f(c):
 
 def f_to_c(f):
     return (f - 32) / 1.8
+def format_temp_label(val_c):
+    if st.session_state.unit == "°F":
+        return f"{round(c_to_f(val_c))}°F"
+    return f"{int(val_c)}°C"
 
 
 def handle_unit_change():
@@ -203,11 +207,12 @@ with main_col:
     # Бързи бутони
     col_b1, col_b2, col_b3 = st.columns(3)
     with col_b1:
-        st.button("❄️ Зимна (-5°C)", use_container_width=True, on_click=set_preset_temperature, args=(-5.0,))
+        st.button(f"❄️ Зимна ({format_temp_label(-5)})", use_container_width=True, on_click=set_preset_temperature, args=(-5.0,))
     with col_b2:
-        st.button("🏠 Стайна (22°C)", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
+        st.button(f"🏠 Стайна ({format_temp_label(22)})", use_container_width=True, on_click=set_preset_temperature, args=(22.0,))
     with col_b3:
-        st.button("🔥 Лятна жега (35°C)", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
+        st.button(f"🔥 Лятна жега ({format_temp_label(35)})", use_container_width=True, on_click=set_preset_temperature, args=(35.0,))
+
 
     # Слайдер и нумерично поле
     c1, c2 = st.columns(2)
@@ -254,6 +259,20 @@ with info_col:
         mercury_color = "#E34234"
     else:
         mercury_color = "#e63946"
+
+    therm_label = f"{temp_f:.1f}°F ({temp_c:.1f}°C)" if st.session_state.unit == "°F" else f"{temp_c:.1f}°C ({temp_f:.1f}°F)"
+    st.markdown(
+        f"""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: {card_bg}; border-radius: 15px; padding: 10px; margin-bottom: 20px; border: 1px solid {border_color}; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+            <div style="position: relative; width: 20px; height: 110px; background: {therm_bg}; border-radius: 12px; border: 2px solid {text_color}; overflow: hidden; display: flex; align-items: flex-end;">
+                <div style="width: 100%; height: {percentage}%; background: {mercury_color}; transition: height 0.5s ease, background-color 0.5s ease;"></div>
+            </div>
+            <div style="width: 30px; height: 30px; background: {mercury_color}; border-radius: 50%; margin-top: -8px; border: 2px solid {text_color}; transition: background-color 0.5s ease;"></div>
+            <div style="margin-top: 5px; font-weight: bold; color: {text_color};">{therm_label}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     st.markdown(
         f"""
@@ -379,18 +398,19 @@ except KeyError:
 if ai_btn:
     st.session_state.weather_message = None
     st.session_state.current_ai_response = None
+    active_temp_str = f"{display_temp:.1f}{st.session_state.unit}"
 
     if temp_c < 10:
-        st.session_state.weather_message = f"🥶 Студено е! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
+        st.session_state.weather_message = f"🥶 Студено е! ({active_temp_str})"
         animation_frames = ["❄️ 🌨️ ❄️", "🌨️ ❄️ 🌨️"]
     elif temp_c < 20:
-        st.session_state.weather_message = f"🌥️ Прохладно е. ({temp_c:.1f}°C / {temp_f:.1f}°F)"
+        st.session_state.weather_message = f"🌥️ Прохладно е. ({active_temp_str})"
         animation_frames = ["☁️ 🌤️ ☁️", "🌤️ ☁️ 🌤️"]
     elif temp_c < 30:
-        st.session_state.weather_message = f"☀️ Приятно топло е! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
+        st.session_state.weather_message = f"☀️ Приятно топло е! ({active_temp_str})"
         animation_frames = ["🌤️ ☀️ 🌤️", "☀️ 🌤️ ☀️"]
     else:
-        st.session_state.weather_message = f"🔥 Много е горещо! ({temp_c:.1f}°C / {temp_f:.1f}°F)"
+        st.session_state.weather_message = f"🔥 Много е горещо! ({active_temp_str})"
         animation_frames = ["☀️ 🔥 ☀️", "🔥 ☀️ 🔥"]
 
     placeholder = st.empty()
@@ -404,13 +424,11 @@ if ai_btn:
         client = Groq(api_key=api_key)
         with st.spinner(f"🤖 {persona} обмисля съветите си..."):
             system_instruction = {"role": "system", "content": persona_prompts[persona]}
+            unit_name = "Фаренхайт (°F)" if st.session_state.unit == "°F" else "Целзий (°C)"
             prompt = (
-                f"Сега температурата е {temp_c:.1f} градуса по Целзий ({temp_f:.1f} градуса по Фаренхайт). "
+                f"Сега температурата е {display_temp:.1f} градуса по {unit_name}. "
+                f"Използвай само {unit_name}, ако споменаваш градуси в отговора си. "
                 f"Дай кратък, практичен и забавен съвет в 3 точки съобразно твоя характер: "
-                f"1. Как да се облечем. 2. Какво да правим. 3. Важен съвет за здравето/сезона. "
-                f"Ако преди това сме обсъждали друга температура, направи забавно сравнение или коментар за промяната. "
-                f"Отговори на български език, използвай много емоджита."
-            )
 
             st.session_state.chat_history.append({"role": "user", "content": prompt})
             if len(st.session_state.chat_history) > 6:
