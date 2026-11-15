@@ -41,9 +41,13 @@ def handle_unit_change():
     current_val = st.session_state.temp_val
     if st.session_state.unit_selector == "°C" and st.session_state.unit == "°F":
         converted = round(f_to_c(current_val), 1)
+        # Гарантираме, че стойността е строго в границите [-30.0, 50.0]
+        converted = max(-30.0, min(50.0, converted))
         st.session_state.unit = "°C"
     elif st.session_state.unit_selector == "°F" and st.session_state.unit == "°C":
         converted = round(c_to_f(current_val), 1)
+        # Гарантираме, че стойността е строго в границите [-22.0, 122.0]
+        converted = max(-22.0, min(122.0, converted))
         st.session_state.unit = "°F"
     else:
         return
@@ -51,6 +55,7 @@ def handle_unit_change():
     st.session_state.temp_val = converted
     st.session_state.slider_input = converted
     st.session_state.num_input = converted
+
 
 
 def sync_inputs(source_key):
@@ -134,6 +139,10 @@ else:
     temp_c = display_temp
     temp_f = c_to_f(display_temp)
     min_slide, max_slide = -30.0, 50.0
+
+# Осигуряваме, че входните полета никога няма да хвърлят грешка за граници
+st.session_state.slider_input = max(min_slide, min(max_slide, st.session_state.slider_input))
+st.session_state.num_input = max(min_slide, min(max_slide, st.session_state.num_input))
 
 # Динамичен цвят на фона спрямо Целзий
 if temp_c <= 0:
