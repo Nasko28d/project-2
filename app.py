@@ -260,7 +260,8 @@ with info_col:
     else:
         mercury_color = "#e63946"
 
-    therm_label = f"{temp_f:.1f}°F ({temp_c:.1f}°C)" if st.session_state.unit == "°F" else f"{temp_c:.1f}°C ({temp_f:.1f}°F)"
+    
+    therm_label = f"{display_temp:.1f}{st.session_state.unit}"
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 180px; background: {card_bg}; border-radius: 15px; padding: 10px; margin-bottom: 20px; border: 1px solid {border_color}; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
